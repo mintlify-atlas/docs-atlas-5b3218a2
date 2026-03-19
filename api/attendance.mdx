@@ -1,0 +1,227 @@
+---
+title: "Attendance API"
+description: "Mark, fetch, and manage student and staff attendance records."
+---
+
+<Info>
+  All endpoints require JWT authentication via the `Authorization: Bearer <token>` header or the `access_token` cookie.
+</Info>
+
+## Endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/api/attendance/generate` | Generate attendance records for a date |
+| `GET` | `/api/attendance/report` | Get attendance report |
+| `GET` | `/api/attendance/student/fetch` | Fetch class attendance for a date |
+| `PATCH` | `/api/attendance/student/update` | Update student attendance status |
+| `GET` | `/api/attendance/leaves/get` | List student leave requests |
+| `POST` | `/api/attendance/leaves/create` | Create a leave request |
+| `PATCH` | `/api/attendance/leaves/update` | Approve or reject a leave request |
+| `DELETE` | `/api/attendance/leave` | Delete a leave request |
+
+Teacher-specific attendance is available via the teacher portal endpoints:
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/teacher/get/class/students/attendance` | Get class attendance (teacher auth) |
+| `PATCH` | `/api/teacher/update/class/students/attendance` | Update attendance (teacher auth) |
+
+---
+
+### POST /api/attendance/generate
+
+Generate attendance records for all students or all teaching staff for a given date. Creates `PRESENT` records that can be individually updated.
+
+<ParamField query="date" type="string">
+  Target date in `DD/MM/YYYY` format. Defaults to today.
+</ParamField>
+
+<ParamField query="attenFor" type="string" required>
+  Target group: `student` or `teacher`.
+</ParamField>
+
+```bash
+curl -X POST "http://localhost:3003/api/attendance/generate?date=15/03/2025&attenFor=student" \
+  -H "Authorization: Bearer <access_token>"
+```
+
+---
+
+### GET /api/attendance/report
+
+Get an aggregated attendance report for a date range, optionally filtered by class and section.
+
+<ParamField query="start" type="string" required>
+  Start date (ISO date string).
+</ParamField>
+
+<ParamField query="end" type="string" required>
+  End date (ISO date string).
+</ParamField>
+
+<ParamField query="classId" type="string">
+  Filter by class ID.
+</ParamField>
+
+<ParamField query="sectionId" type="string">
+  Filter by section ID.
+</ParamField>
+
+```bash
+curl "http://localhost:3003/api/attendance/report?start=2025-03-01&end=2025-03-31&classId=3" \
+  -H "Authorization: Bearer <access_token>"
+```
+
+---
+
+### GET /api/attendance/student/fetch
+
+Fetch the attendance records for a class on a specific date.
+
+<ParamField query="classId" type="string" required>
+  Class ID.
+</ParamField>
+
+<ParamField query="sectionId" type="string">
+  Section ID.
+</ParamField>
+
+<ParamField query="subjectId" type="string" required>
+  Subject ID.
+</ParamField>
+
+<ParamField query="date" type="string" required>
+  Date in ISO format.
+</ParamField>
+
+```bash
+curl "http://localhost:3003/api/attendance/student/fetch?classId=3&subjectId=10&date=2025-03-15" \
+  -H "Authorization: Bearer <access_token>"
+```
+
+---
+
+### PATCH /api/attendance/student/update
+
+Bulk update attendance statuses for a class on a given date.
+
+**Request body**
+
+<ParamField body="classId" type="number" required>
+  Class ID.
+</ParamField>
+
+<ParamField body="sectionId" type="number">
+  Section ID (nullable).
+</ParamField>
+
+<ParamField body="subjectId" type="number" required>
+  Subject ID.
+</ParamField>
+
+<ParamField body="teacherId" type="number">
+  Teacher ID (nullable).
+</ParamField>
+
+<ParamField body="date" type="string" required>
+  Date string.
+</ParamField>
+
+<ParamField body="students" type="array" required>
+  Array of student attendance updates.
+  <Expandable title="student object">
+    <ParamField body="studentId" type="string" required>
+      Student ID.
+    </ParamField>
+    <ParamField body="status" type="string" required>
+      Attendance status: `PRESENT`, `ABSENT`, `LEAVE`, or `HALF_DAY`.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+```bash
+curl -X PATCH http://localhost:3003/api/attendance/student/update \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "classId": 3,
+    "sectionId": 1,
+    "subjectId": 10,
+    "teacherId": 7,
+    "date": "2025-03-15",
+    "students": [
+      {"studentId": "101", "status": "PRESENT"},
+      {"studentId": "102", "status": "ABSENT"}
+    ]
+  }'
+```
+
+---
+
+## Student leaves
+
+### GET /api/attendance/leaves/get
+
+Return paginated leave requests.
+
+<ParamField query="page" type="number">
+  Page number. Defaults to `1`.
+</ParamField>
+
+<ParamField query="limit" type="number">
+  Results per page. Defaults to `100`.
+</ParamField>
+
+---
+
+### POST /api/attendance/leaves/create
+
+Create a leave application for a student.
+
+<ParamField body="studentId" type="string" required>
+  Student ID.
+</ParamField>
+
+<ParamField body="reason" type="string" required>
+  Reason for leave.
+</ParamField>
+
+<ParamField body="fromDate" type="string" required>
+  Leave start date (ISO date string).
+</ParamField>
+
+<ParamField body="toDate" type="string" required>
+  Leave end date (ISO date string).
+</ParamField>
+
+```bash
+curl -X POST http://localhost:3003/api/attendance/leaves/create \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"studentId": "101", "reason": "Medical", "fromDate": "2025-03-20", "toDate": "2025-03-22"}'
+```
+
+---
+
+### PATCH /api/attendance/leaves/update
+
+Approve or reject a leave request. Requires authentication; the approver's ID is recorded automatically.
+
+<ParamField query="id" type="number" required>
+  Leave request ID.
+</ParamField>
+
+<ParamField body="status" type="string" required>
+  New status: `APPROVED` or `REJECTED`.
+</ParamField>
+
+---
+
+### DELETE /api/attendance/leave
+
+Delete a leave request.
+
+<ParamField query="id" type="number" required>
+  Leave request ID.
+</ParamField>

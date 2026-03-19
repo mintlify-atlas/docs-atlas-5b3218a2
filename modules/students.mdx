@@ -1,0 +1,135 @@
+---
+title: "Students"
+description: "Enroll and manage students, track their academic journey, and handle leave requests and promotions."
+---
+
+## Overview
+
+The Students module covers the full student lifecycle: enrollment, profile management, leave requests, academic history, and graduation or status changes. Admins can search for students by name or roll number, view per-student attendance and exam results, and manage promotions through the program classes.
+
+## Key features
+
+<CardGroup cols={2}>
+  <Card title="Student enrollment" icon="user-plus">
+    Add new students with personal details, program/class/section assignment, roll number, and an optional photo uploaded to Cloudinary.
+  </Card>
+  <Card title="Roll number generation" icon="hashtag">
+    The system suggests the next available roll number based on the program prefix and academic year, ensuring sequential numbering across all programs sharing the same year.
+  </Card>
+  <Card title="Status management" icon="user-check">
+    Change student status between ACTIVE, EXPELLED, STRUCK_OFF, and GRADUATED. All status changes are logged with a reason and timestamp.
+  </Card>
+  <Card title="Document storage" icon="folder-open">
+    Attach multiple documents per student (stored as a JSON array of Cloudinary URLs). Used for admission forms, certificates, and other records.
+  </Card>
+  <Card title="Leave requests" icon="calendar-minus">
+    Admins can create and approve or reject student leave requests. Approved leaves automatically mark attendance records as LEAVE for the covered dates.
+  </Card>
+  <Card title="Promotion workflow" icon="arrow-up">
+    Promote a student to the next class in their program. The system checks for unpaid fees before allowing promotion. Arrears can be carried forward with admin confirmation.
+  </Card>
+  <Card title="Attendance and results" icon="chart-bar">
+    View per-student attendance summaries by subject and overall exam results including percentage, GPA, and grade.
+  </Card>
+  <Card title="Custom fee overrides" icon="circle-dollar-sign">
+    Set a student-specific tuition fee and number of installments that override the standard fee structure for their program and class.
+  </Card>
+</CardGroup>
+
+## Workflows
+
+<Tabs>
+  <Tab title="Enroll a student">
+    <Steps>
+      <Step title="Get next roll number">
+        Enter the program prefix to retrieve the latest roll number. The system increments the sequence number automatically.
+      </Step>
+      <Step title="Fill in personal details">
+        Enter first name, middle name, last name, father/guardian name, date of birth, gender, address, parent contact details, and optional email.
+      </Step>
+      <Step title="Assign program, class, and section">
+        Select the program, class, and section. If the student came through an inquiry, link the inquiry ID.
+      </Step>
+      <Step title="Upload photo">
+        Select a photo (max 5 MB). The file is uploaded to Cloudinary and the URL stored on the student record.
+      </Step>
+      <Step title="Set fee installments">
+        Enter the tuition fee, number of installments, and due dates for each installment. These are stored as `StudentFeeInstallment` records.
+      </Step>
+      <Step title="Submit">
+        The student record is created with status `ACTIVE`. If the roll number is already taken, the form returns an error.
+      </Step>
+    </Steps>
+  </Tab>
+  <Tab title="Promote a student">
+    <Steps>
+      <Step title="Select the student">
+        Find the student using the search or by filtering by program, class, and section.
+      </Step>
+      <Step title="Initiate promotion">
+        Click the promote action. The system checks whether the student has outstanding fees for the current class.
+      </Step>
+      <Step title="Confirm arrears (if any)">
+        If unpaid fees exist, the system shows the outstanding amount and unpaid challans. Choose to proceed with `forcePromote = true` or cancel.
+      </Step>
+      <Step title="Choose target class">
+        The system automatically selects the next class in sequence. You can override and select a specific target class and section.
+      </Step>
+      <Step title="Fee reset">
+        After promotion, the student's installment plan is reset to match the fee structure of the new class.
+      </Step>
+    </Steps>
+  </Tab>
+  <Tab title="Leave management">
+    <Steps>
+      <Step title="Create a leave request">
+        Enter the student ID, reason, from date, and to date.
+      </Step>
+      <Step title="Approve or reject">
+        Update the leave status to `APPROVED` or `REJECTED`. On approval, attendance records for all covered dates (current and past only) are upserted with status `LEAVE` (or `ABSENT` for rejected).
+      </Step>
+    </Steps>
+  </Tab>
+</Tabs>
+
+## Data fields
+
+<AccordionGroup>
+  <Accordion title="Student profile">
+    | Field | Description |
+    |-------|-------------|
+    | `fName`, `mName`, `lName` | First, middle, and last name |
+    | `rollNumber` | Unique roll number (e.g., `PSH-CS-BS26-001`) |
+    | `fatherOrguardian` | Father or guardian name |
+    | `parentOrGuardianEmail` | Parent contact email |
+    | `parentOrGuardianPhone` | Parent contact phone |
+    | `dob` | Date of birth |
+    | `gender` | Gender string |
+    | `address` | Home address |
+    | `photo_url` | Cloudinary photo URL |
+    | `documents` | JSON array of document URLs |
+    | `status` | `ACTIVE`, `EXPELLED`, `STRUCK_OFF`, or `GRADUATED` |
+    | `passedOut` | Boolean flag set to `true` for GRADUATED, EXPELLED, and STRUCK_OFF students |
+  </Accordion>
+  <Accordion title="Fee settings">
+    | Field | Description |
+    |-------|-------------|
+    | `tuitionFee` | Student-specific tuition amount (overrides structure total if set) |
+    | `numberOfInstallments` | Number of installments for the current class |
+    | `lateFeeFine` | Student-specific late fee override |
+  </Accordion>
+  <Accordion title="Leave request">
+    | Field | Description |
+    |-------|-------------|
+    | `studentId` | Linked student |
+    | `reason` | Reason for the leave |
+    | `fromDate` | Leave start date |
+    | `toDate` | Leave end date |
+    | `status` | `PENDING`, `APPROVED`, `REJECTED`, or `CANCELLED` |
+    | `approvedById` | Admin who approved or rejected |
+  </Accordion>
+</AccordionGroup>
+
+## Permissions
+
+This module requires the `students` permission in `admin.permissions.modules`.

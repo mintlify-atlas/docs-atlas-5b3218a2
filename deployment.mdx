@@ -1,0 +1,202 @@
+---
+title: "Deployment"
+description: "Deploy Concordia PSH to a production server using Docker Compose."
+---
+
+<Warning>
+  Change all default secrets — JWT keys, database password, and Cloudinary credentials — before exposing the application to the internet. The defaults in `docker-compose.yml` are for local development only.
+</Warning>
+
+## Docker Compose configuration
+
+Concordia PSH ships with a `docker-compose.yml` that defines three services:
+
+```yaml docker-compose.yml
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: concordia
+    command: --lower_case_table_names=1
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+    container_name: backend
+    restart: always
+    ports:
+      - "3003:3003"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      NODE_ENV: "development"
+      DATABASE_URL: "mysql://root:root@mysql:3306/concordia"
+      JWT_ACCESS_SECRET: "asdaskdpanqweqejlsadnasnd"
+      JWT_REFRESH_SECRET: "09190199219jjkdjasjdnasnd"
+      PORT: "3003"
+      ALLOWED_IP: "http://69.62.117.175:8080"
+      CLOUDINARY_URL: "cloudinary://973774315816455:EV1VsJ4edk6mLdx1baGVJpa3dMc@dldigpb7f"
+      CLOUD_NAME: "dldigpb7f"
+      CLOUDINARY_API_KEY: "973774315816455"
+      CLOUDINARY_API_SECRET: "EV1VsJ4edk6mLdx1baGVJpa3dMc"
+
+  admin-panel:
+    build:
+      context: ./admin-panel
+    container_name: admin-panel
+    restart: always
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+
+volumes:
+  mysql_data:
+```
+
+### Service details
+
+**`mysql`** — MySQL 8.0 database.
+- Data is persisted in the named volume `mysql_data`.
+- The health check (`mysqladmin ping`) prevents the backend from starting before the database is ready.
+- `--lower_case_table_names=1` ensures case-insensitive table name matching.
+
+**`backend`** — NestJS REST API.
+- Exposed on port `3003`.
+- `restart: always` ensures the container restarts after host reboots or crashes.
+- Waits for the `mysql` service health check to pass before starting (`condition: service_healthy`).
+
+**`admin-panel`** — React admin panel built with Vite.
+- Exposed on port `5173`.
+- Depends on `backend` (starts after backend container is running).
+
+## Production deployment
+
+<Steps>
+  <Step title="Provision a server">
+    Set up a Linux server (Ubuntu 22.04 LTS recommended) with Docker and Docker Compose installed.
+
+    ```bash
+    # Install Docker
+    curl -fsSL https://get.docker.com | sh
+
+    # Install Docker Compose plugin
+    sudo apt-get install docker-compose-plugin
+    ```
+  </Step>
+
+  <Step title="Clone the repository">
+    ```bash
+    git clone https://github.com/your-org/concordia-psh.git
+    cd concordia-psh
+    ```
+  </Step>
+
+  <Step title="Customize environment variables">
+    Edit `docker-compose.yml` and replace all default values with production secrets:
+
+    | Variable | Description | Example |
+    |---|---|---|
+    | `MYSQL_ROOT_PASSWORD` | MySQL root password | `s3cur3P@ssw0rd` |
+    | `DATABASE_URL` | Full MySQL connection string | `mysql://root:s3cur3P@ssw0rd@mysql:3306/concordia` |
+    | `JWT_ACCESS_SECRET` | Secret for signing access tokens | 32+ random characters |
+    | `JWT_REFRESH_SECRET` | Secret for signing refresh tokens | 32+ random characters (different from access secret) |
+    | `ALLOWED_IP` | CORS origin for the admin panel | `https://admin.yourdomain.com` |
+    | `CLOUDINARY_URL` | Full Cloudinary connection URL | From your Cloudinary dashboard |
+    | `CLOUD_NAME` | Cloudinary cloud name | From your Cloudinary dashboard |
+    | `CLOUDINARY_API_KEY` | Cloudinary API key | From your Cloudinary dashboard |
+    | `CLOUDINARY_API_SECRET` | Cloudinary API secret | From your Cloudinary dashboard |
+    | `NODE_ENV` | Runtime environment | `production` |
+
+    <Note>
+      Generate strong JWT secrets with a command like `openssl rand -hex 32`. Use a different value for each secret.
+    </Note>
+  </Step>
+
+  <Step title="Build and start services">
+    ```bash
+    docker compose up -d --build
+    ```
+
+    The `--build` flag ensures fresh images are built from the current source. Omit it on subsequent deployments if you are pulling pre-built images.
+  </Step>
+
+  <Step title="Seed the database">
+    Run the Prisma seed script to create the initial super admin account:
+
+    ```bash
+    docker compose exec backend npx ts-node prisma/seed.ts
+    ```
+
+    <Warning>
+      Change the default super admin credentials immediately after the first login.
+    </Warning>
+  </Step>
+
+  <Step title="Verify services are running">
+    ```bash
+    docker compose ps
+    ```
+
+    All three services (`mysql-db`, `backend`, `admin-panel`) should show a status of `Up`.
+
+    Check the API is responding:
+
+    ```bash
+    curl http://localhost:3003/api
+    ```
+  </Step>
+</Steps>
+
+## Updating to a new version
+
+<Steps>
+  <Step title="Pull the latest code">
+    ```bash
+    git pull origin main
+    ```
+  </Step>
+
+  <Step title="Rebuild and restart">
+    ```bash
+    docker compose up -d --build
+    ```
+
+    Docker Compose rebuilds only the services whose source has changed, then restarts them with zero downtime for unchanged services.
+  </Step>
+
+  <Step title="Run database migrations (if any)">
+    If the new version includes Prisma schema changes, run migrations after the backend starts:
+
+    ```bash
+    docker compose exec backend npx prisma migrate deploy
+    ```
+  </Step>
+</Steps>
+
+## Health checks and restart policy
+
+All three services are configured with `restart: always`. This means:
+
+- Containers restart automatically if they exit unexpectedly.
+- Containers start automatically when the Docker daemon restarts (e.g., after a server reboot).
+
+The `mysql` service has an explicit health check that runs `mysqladmin ping` every 10 seconds with up to 5 retries. The backend will not start until MySQL is confirmed healthy.
+
+To view container logs:
+
+```bash
+docker compose logs -f backend
+docker compose logs -f admin-panel
+docker compose logs -f mysql
+```

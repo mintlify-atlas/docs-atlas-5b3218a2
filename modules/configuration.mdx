@@ -1,0 +1,151 @@
+---
+title: "Configuration"
+description: "System-wide settings for institute identity, admin accounts, templates, and payroll rules."
+---
+
+## Overview
+
+The Configuration module is used by Super Admins to set up and maintain the core settings of the institution. It controls institute identity information, fee defaults, admin account management with granular permissions, print templates for all documents, and payroll deduction rules.
+
+<Warning>
+  Only SUPER_ADMIN accounts can create, modify, or delete other admin accounts and change system-wide settings.
+</Warning>
+
+## Key features
+
+<CardGroup cols={2}>
+  <Card title="Institute settings" icon="building-columns">
+    Configure institution name, contact email, phone, address, social media links (Facebook, Instagram), logo, fee challan prefix, and late fee fine rate.
+  </Card>
+  <Card title="Admin account management" icon="user-shield">
+    Create, update, and delete admin accounts. Assign roles (SUPER_ADMIN or ADMIN) and module-level permissions.
+  </Card>
+  <Card title="Payroll settings" icon="sliders">
+    Set deduction rates per absent and leave day, plus the number of absences and leaves allowed before deductions apply.
+  </Card>
+  <Card title="Report card templates" icon="id-card">
+    Create and manage HTML-based report card print templates. One template can be marked as the default.
+  </Card>
+  <Card title="Payroll templates" icon="file-invoice-dollar">
+    Create salary slip and payroll sheet print templates for HR use.
+  </Card>
+  <Card title="Fee challan templates" icon="receipt">
+    Create printable fee challan layouts. One template can be set as default.
+  </Card>
+  <Card title="Staff ID card templates" icon="address-card">
+    Create ID card print templates for teaching and non-teaching staff.
+  </Card>
+  <Card title="Student ID card templates" icon="id-badge">
+    Create ID card print templates for students.
+  </Card>
+</CardGroup>
+
+## Workflows
+
+<Tabs>
+  <Tab title="Institute settings">
+    <Steps>
+      <Step title="Open Configuration">
+        Navigate to Configuration in the sidebar.
+      </Step>
+      <Step title="Edit institute settings">
+        Update the institution name, email, phone, address, logo URL, and social media links.
+      </Step>
+      <Step title="Set fee defaults">
+        Enter the `challanPrefix` (e.g., `PSH`) and `lateFeeFine` (daily fine amount for overdue challans).
+      </Step>
+      <Step title="Save">
+        Submit the form. If no settings record exists yet, a new one is created automatically.
+      </Step>
+    </Steps>
+  </Tab>
+  <Tab title="Admin management">
+    <Steps>
+      <Step title="Create an admin account">
+        Navigate to the Admins section. Provide name, email, password, and role (SUPER_ADMIN or ADMIN).
+      </Step>
+      <Step title="Assign permissions">
+        For ADMIN role accounts, select which modules the admin can access. Permissions are stored as a JSON array of module names in the `admin.permissions` field.
+      </Step>
+      <Step title="Update or delete">
+        Edit an existing admin to change their name, password, or permission set. Delete to revoke access entirely.
+      </Step>
+    </Steps>
+  </Tab>
+  <Tab title="Templates">
+    <Steps>
+      <Step title="Create a template">
+        Choose the template type (report card, payroll, fee challan, staff ID card, or student ID card). Enter a name and paste the HTML content.
+      </Step>
+      <Step title="Set as default">
+        Mark a template as default. The system automatically removes the default flag from any previously default template of the same type.
+      </Step>
+      <Step title="Update or delete">
+        Edit the HTML content or name at any time. Delete templates that are no longer needed.
+      </Step>
+    </Steps>
+  </Tab>
+  <Tab title="Payroll settings">
+    <Steps>
+      <Step title="Open payroll settings">
+        Navigate to the Payroll Settings section within Configuration.
+      </Step>
+      <Step title="Set deduction rates">
+        Enter the PKR amount to deduct per absent day (`absentDeduction`) and per leave day (`leaveDeduction`).
+      </Step>
+      <Step title="Set allowances">
+        Enter how many absences (`absentsAllowed`) and leaves (`leavesAllowed`) are permitted before deductions begin.
+      </Step>
+      <Step title="Save">
+        Submit the form. Settings are applied globally to the payroll sheet calculations.
+      </Step>
+    </Steps>
+  </Tab>
+</Tabs>
+
+## Data fields
+
+<AccordionGroup>
+  <Accordion title="Institute settings">
+    | Field | Description |
+    |-------|-------------|
+    | `instituteName` | Full name of the institution (required) |
+    | `email` | Public contact email |
+    | `phone` | Public contact phone number |
+    | `address` | Physical address |
+    | `facebook` | Facebook page URL |
+    | `instagram` | Instagram profile URL |
+    | `logo` | Cloudinary URL for the institute logo |
+    | `challanPrefix` | Prefix string prepended to challan numbers |
+    | `lateFeeFine` | Daily fine amount (PKR) charged on overdue challans |
+  </Accordion>
+  <Accordion title="Admin account">
+    | Field | Description |
+    |-------|-------------|
+    | `name` | Admin display name |
+    | `email` | Login email (unique) |
+    | `password` | Hashed password |
+    | `role` | `SUPER_ADMIN` or `ADMIN` |
+    | `permissions` | JSON object containing `modules` array of permitted module keys |
+  </Accordion>
+  <Accordion title="Payroll settings">
+    | Field | Description |
+    |-------|-------------|
+    | `absentDeduction` | PKR deducted per absent day exceeding the allowance |
+    | `leaveDeduction` | PKR deducted per leave day exceeding the allowance |
+    | `leavesAllowed` | Number of leave days permitted without deduction |
+    | `absentsAllowed` | Number of absent days permitted without deduction |
+  </Accordion>
+  <Accordion title="Templates (all types)">
+    | Field | Description |
+    |-------|-------------|
+    | `name` | Template display name |
+    | `htmlContent` | Full HTML markup used for printing |
+    | `isDefault` | Whether this is the active default template for its type |
+    | `createdBy` | Email or name of the admin who created it |
+  </Accordion>
+</AccordionGroup>
+
+## Permissions
+
+This module requires the `configuration` permission in `admin.permissions.modules`. Only SUPER_ADMIN accounts can manage other admin accounts.

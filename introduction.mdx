@@ -1,0 +1,97 @@
+---
+title: "Concordia PSH"
+description: "A comprehensive educational institution management system for schools, colleges, and universities."
+---
+
+<CardGroup cols={2}>
+  <Card title="Quick Start" icon="rocket" href="/quickstart">
+    Get Concordia PSH running in minutes with Docker Compose
+  </Card>
+  <Card title="Deployment Guide" icon="server" href="/deployment">
+    Deploy to production with MySQL, backend, and admin panel
+  </Card>
+  <Card title="System Modules" icon="grid-2" href="/modules/dashboard">
+    Explore all management modules from students to finance
+  </Card>
+  <Card title="API Reference" icon="code" href="/api/authentication">
+    Integrate with the REST API for custom workflows
+  </Card>
+</CardGroup>
+
+## What is Concordia PSH?
+
+Concordia PSH is a full-featured institution management platform designed for intermediate colleges, undergraduate programs, and short-course institutes. It unifies every administrative function into a single, permission-controlled system — from student enrollment and fee collection to staff payroll and hostel allocation.
+
+The platform is built on a **NestJS** backend with **Prisma ORM** and **MySQL**, paired with a **React** admin panel. The entire stack is containerized with **Docker Compose** for straightforward deployment.
+
+## Key capabilities
+
+<CardGroup cols={3}>
+  <Card title="Student Management" icon="graduation-cap">
+    Full lifecycle from inquiry and admission through graduation, with photo uploads, document storage, and status tracking.
+  </Card>
+  <Card title="Fee Management" icon="file-invoice-dollar">
+    Generate fee challans, track installments, manage arrears, and apply discounts with a flexible fee structure engine.
+  </Card>
+  <Card title="Attendance" icon="calendar-check">
+    Subject-wise attendance for students and daily attendance for staff, with leave request workflows.
+  </Card>
+  <Card title="Examinations" icon="pen-to-square">
+    Create exams, schedule papers, enter marks, auto-calculate results and GPA, and generate printable report cards.
+  </Card>
+  <Card title="HR & Payroll" icon="users">
+    Manage teaching and non-teaching staff, process monthly payroll with allowances and deductions, and track advance salaries.
+  </Card>
+  <Card title="Finance" icon="chart-line">
+    Record institutional income and expenses by category, and generate period-closing balance reports.
+  </Card>
+  <Card title="Hostel" icon="building">
+    Register students and external residents, allocate rooms, track hostel expenses, and manage inventory.
+  </Card>
+  <Card title="Inventory" icon="boxes-stacked">
+    Track school assets across labs, sports, and classrooms with condition monitoring and maintenance cost logs.
+  </Card>
+  <Card title="Front Office" icon="door-open">
+    Handle admissions inquiries, visitor logs, complaint management, and emergency contacts from one place.
+  </Card>
+</CardGroup>
+
+## Role-based access control
+
+Every admin account can be scoped to specific modules. A SUPER_ADMIN has unrestricted access, while regular ADMINs are granted access only to the modules they need — right down to individual features within each module.
+
+```json
+{
+  "role": "ADMIN",
+  "permissions": {
+    "modules": ["Students", "Fee Management", "Attendance"]
+  }
+}
+```
+
+## System overview
+
+```
+┌─────────────────────────────────────────────┐
+│              Admin Panel (React)             │
+│         Vite · React Router · shadcn/ui      │
+└──────────────────┬──────────────────────────┘
+                   │ REST API (HTTP/JSON)
+┌──────────────────▼──────────────────────────┐
+│             Backend (NestJS)                 │
+│     Prisma ORM · JWT Auth · Cloudinary       │
+└──────────────────┬──────────────────────────┘
+                   │
+┌──────────────────▼──────────────────────────┐
+│              MySQL 8.0 Database              │
+└─────────────────────────────────────────────┘
+```
+
+<CardGroup cols={2}>
+  <Card title="Architecture overview" icon="diagram-project" href="/architecture/overview">
+    Understand how the backend, frontend, and database fit together
+  </Card>
+  <Card title="Database schema" icon="database" href="/architecture/database">
+    Explore the full Prisma schema with all models and relationships
+  </Card>
+</CardGroup>

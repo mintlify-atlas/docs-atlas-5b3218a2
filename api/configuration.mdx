@@ -1,0 +1,215 @@
+---
+title: "Configuration API"
+description: "Manage institute settings and templates for report cards, payroll slips, and ID cards."
+---
+
+<Info>
+  All endpoints require JWT authentication via the `Authorization: Bearer <token>` header or the `access_token` cookie.
+</Info>
+
+## Endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/configuration/institute-settings` | Get institute settings |
+| `PATCH` | `/api/configuration/institute-settings` | Update institute settings |
+| `POST` | `/api/configuration/report-card-templates` | Create a report card template |
+| `GET` | `/api/configuration/report-card-templates` | List report card templates |
+| `GET` | `/api/configuration/report-card-templates/default` | Get the default report card template |
+| `GET` | `/api/configuration/report-card-templates/:id` | Get a report card template by ID |
+| `PATCH` | `/api/configuration/report-card-templates/:id` | Update a report card template |
+| `DELETE` | `/api/configuration/report-card-templates/:id` | Delete a report card template |
+| `POST` | `/api/configuration/staff-id-card-templates` | Create a staff ID card template |
+| `GET` | `/api/configuration/staff-id-card-templates` | List staff ID card templates |
+| `GET` | `/api/configuration/staff-id-card-templates/default` | Get default staff ID card template |
+| `GET` | `/api/configuration/staff-id-card-templates/:id` | Get staff ID card template by ID |
+| `PATCH` | `/api/configuration/staff-id-card-templates/:id` | Update a staff ID card template |
+| `DELETE` | `/api/configuration/staff-id-card-templates/:id` | Delete a staff ID card template |
+| `POST` | `/api/configuration/student-id-card-templates` | Create a student ID card template |
+| `GET` | `/api/configuration/student-id-card-templates` | List student ID card templates |
+| `GET` | `/api/configuration/student-id-card-templates/default` | Get default student ID card template |
+| `GET` | `/api/configuration/student-id-card-templates/:id` | Get student ID card template by ID |
+| `PATCH` | `/api/configuration/student-id-card-templates/:id` | Update a student ID card template |
+| `DELETE` | `/api/configuration/student-id-card-templates/:id` | Delete a student ID card template |
+
+<Note>
+  Fee challan templates are managed separately under the [Fee Management API](/api/fee-management). Payroll templates are managed under the [HR & Payroll API](/api/hr-payroll).
+</Note>
+
+---
+
+## Institute settings
+
+### GET /api/configuration/institute-settings
+
+Return the current institute configuration (name, address, logo URL, contact details, etc.).
+
+```bash
+curl http://localhost:3003/api/configuration/institute-settings \
+  -H "Authorization: Bearer <access_token>"
+```
+
+<ResponseField name="id" type="number">
+  Settings record ID.
+</ResponseField>
+
+<ResponseField name="instituteName" type="string">
+  Name of the institution.
+</ResponseField>
+
+<ResponseField name="address" type="string">
+  Physical address.
+</ResponseField>
+
+<ResponseField name="phone" type="string">
+  Contact phone number.
+</ResponseField>
+
+<ResponseField name="email" type="string">
+  Contact email.
+</ResponseField>
+
+<ResponseField name="logoUrl" type="string">
+  URL of the institution logo.
+</ResponseField>
+
+### PATCH /api/configuration/institute-settings
+
+Update any institute setting. All fields are optional; only the provided fields are updated.
+
+```bash
+curl -X PATCH http://localhost:3003/api/configuration/institute-settings \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"instituteName": "Concordia PSH", "phone": "+92-51-1234567"}'
+```
+
+---
+
+## Report card templates
+
+Templates control the visual layout of generated student report cards.
+
+### POST /api/configuration/report-card-templates
+
+Create a new report card template.
+
+<Note>
+  The template body contains layout configuration. Refer to `CreateReportCardTemplateDto` in the source for the exact schema.
+</Note>
+
+```bash
+curl -X POST http://localhost:3003/api/configuration/report-card-templates \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Standard Report Card", "isDefault": true, "layout": {}}'
+```
+
+### GET /api/configuration/report-card-templates
+
+List all report card templates.
+
+### GET /api/configuration/report-card-templates/default
+
+Return the template currently marked as default.
+
+```bash
+curl http://localhost:3003/api/configuration/report-card-templates/default \
+  -H "Authorization: Bearer <access_token>"
+```
+
+### GET /api/configuration/report-card-templates/:id
+
+<ParamField path="id" type="number" required>
+  Template ID.
+</ParamField>
+
+### PATCH /api/configuration/report-card-templates/:id
+
+<ParamField path="id" type="number" required>
+  Template ID.
+</ParamField>
+
+### DELETE /api/configuration/report-card-templates/:id
+
+<ParamField path="id" type="number" required>
+  Template ID.
+</ParamField>
+
+---
+
+## Staff ID card templates
+
+### POST /api/configuration/staff-id-card-templates
+
+Create a new staff ID card template.
+
+### GET /api/configuration/staff-id-card-templates
+
+List all staff ID card templates.
+
+### GET /api/configuration/staff-id-card-templates/default
+
+Return the default staff ID card template.
+
+```bash
+curl http://localhost:3003/api/configuration/staff-id-card-templates/default \
+  -H "Authorization: Bearer <access_token>"
+```
+
+### GET /api/configuration/staff-id-card-templates/:id
+
+<ParamField path="id" type="number" required>
+  Template ID.
+</ParamField>
+
+### PATCH /api/configuration/staff-id-card-templates/:id
+
+<ParamField path="id" type="number" required>
+  Template ID.
+</ParamField>
+
+### DELETE /api/configuration/staff-id-card-templates/:id
+
+<ParamField path="id" type="number" required>
+  Template ID.
+</ParamField>
+
+---
+
+## Student ID card templates
+
+### POST /api/configuration/student-id-card-templates
+
+Create a new student ID card template.
+
+### GET /api/configuration/student-id-card-templates
+
+List all student ID card templates.
+
+### GET /api/configuration/student-id-card-templates/default
+
+Return the default student ID card template.
+
+```bash
+curl http://localhost:3003/api/configuration/student-id-card-templates/default \
+  -H "Authorization: Bearer <access_token>"
+```
+
+### GET /api/configuration/student-id-card-templates/:id
+
+<ParamField path="id" type="number" required>
+  Template ID.
+</ParamField>
+
+### PATCH /api/configuration/student-id-card-templates/:id
+
+<ParamField path="id" type="number" required>
+  Template ID.
+</ParamField>
+
+### DELETE /api/configuration/student-id-card-templates/:id
+
+<ParamField path="id" type="number" required>
+  Template ID.
+</ParamField>

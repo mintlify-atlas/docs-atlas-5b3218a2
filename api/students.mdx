@@ -1,0 +1,267 @@
+---
+title: "Students API"
+description: "Create, read, update, and manage student records in Concordia PSH."
+---
+
+<Info>
+  All endpoints require JWT authentication via the `Authorization: Bearer <token>` header or the `access_token` cookie.
+</Info>
+
+## Endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/student/get/all` | List active students |
+| `GET` | `/api/student/get/all/passout` | List graduated/passout students |
+| `GET` | `/api/student/:id` | Get student by ID |
+| `GET` | `/api/student/search` | Search students |
+| `GET` | `/api/student/roll-number/latest` | Get latest roll number for a prefix |
+| `POST` | `/api/student/create` | Create a new student |
+| `PATCH` | `/api/student/update` | Update a student |
+| `DELETE` | `/api/student/remove` | Delete a student |
+| `PATCH` | `/api/student/promote` | Promote student to next class |
+| `PATCH` | `/api/student/demote` | Demote student |
+| `PATCH` | `/api/student/passout` | Mark student as passed out |
+| `PATCH` | `/api/student/expel` | Expel a student |
+| `PATCH` | `/api/student/struck-off` | Mark student as struck off |
+| `PATCH` | `/api/student/rejoin` | Re-enroll a student |
+| `GET` | `/api/student/attendance/:id` | Get attendance records for a student |
+| `GET` | `/api/student/results/:id` | Get exam results for a student |
+| `GET` | `/api/student/attendance-report/:id` | Generate attendance report |
+| `GET` | `/api/student/result-report/:id` | Generate result report |
+
+---
+
+### GET /api/student/get/all
+
+Returns a paginated list of active students. At least one filter parameter must be provided; the endpoint returns an empty array if no filters are given.
+
+<ParamField query="programId" type="number">
+  Filter by program ID.
+</ParamField>
+
+<ParamField query="classId" type="number">
+  Filter by class ID.
+</ParamField>
+
+<ParamField query="sectionId" type="number">
+  Filter by section ID.
+</ParamField>
+
+<ParamField query="searchQuery" type="string">
+  Full-text search across student names and roll numbers.
+</ParamField>
+
+<ParamField query="status" type="string">
+  Filter by status. Defaults to `ACTIVE`.
+</ParamField>
+
+<ParamField query="startDate" type="string">
+  Filter by admission date range start (ISO date).
+</ParamField>
+
+<ParamField query="endDate" type="string">
+  Filter by admission date range end (ISO date).
+</ParamField>
+
+<ParamField query="page" type="number">
+  Page number. Defaults to `1`.
+</ParamField>
+
+<ParamField query="limit" type="number">
+  Results per page. Defaults to `20`.
+</ParamField>
+
+```bash
+curl "http://localhost:3003/api/student/get/all?classId=3&page=1&limit=20" \
+  -H "Authorization: Bearer <access_token>"
+```
+
+---
+
+### GET /api/student/:id
+
+Return a single student record by numeric ID.
+
+<ParamField path="id" type="number" required>
+  Student's unique ID.
+</ParamField>
+
+---
+
+### POST /api/student/create
+
+Create a new student record. This endpoint accepts `multipart/form-data` to support photo uploads.
+
+<Note>
+  Send the request as `multipart/form-data`. The `photo` field accepts an image file (max 5 MB). The `documents` and `installments` fields must be JSON strings when sent as form data.
+</Note>
+
+<ParamField body="fName" type="string" required>
+  Student's first name.
+</ParamField>
+
+<ParamField body="mName" type="string">
+  Student's middle name.
+</ParamField>
+
+<ParamField body="lName" type="string">
+  Student's last name.
+</ParamField>
+
+<ParamField body="fatherOrguardian" type="string" required>
+  Father or guardian's name.
+</ParamField>
+
+<ParamField body="rollNumber" type="string" required>
+  Unique roll number. Must not already be assigned to another student.
+</ParamField>
+
+<ParamField body="parentOrGuardianPhone" type="string" required>
+  Parent or guardian's phone number.
+</ParamField>
+
+<ParamField body="parentOrGuardianEmail" type="string">
+  Parent or guardian's email.
+</ParamField>
+
+<ParamField body="gender" type="string" required>
+  Student's gender.
+</ParamField>
+
+<ParamField body="dob" type="string" required>
+  Date of birth (ISO date string).
+</ParamField>
+
+<ParamField body="classId" type="string" required>
+  ID of the class to enroll the student in.
+</ParamField>
+
+<ParamField body="programId" type="string" required>
+  ID of the academic program.
+</ParamField>
+
+<ParamField body="sectionId" type="string">
+  ID of the section.
+</ParamField>
+
+<ParamField body="address" type="string">
+  Student's home address.
+</ParamField>
+
+<ParamField body="documents" type="string" required>
+  JSON string listing provided documents (e.g. `"[]"`)
+</ParamField>
+
+<ParamField body="status" type="string">
+  Student status. Defaults to `ACTIVE`.
+</ParamField>
+
+<ParamField body="tuitionFee" type="number">
+  Custom tuition fee amount.
+</ParamField>
+
+<ParamField body="numberOfInstallments" type="number">
+  Number of fee installments.
+</ParamField>
+
+<ParamField body="photo" type="file">
+  Profile photo (max 5 MB).
+</ParamField>
+
+```bash
+curl -X POST http://localhost:3003/api/student/create \
+  -H "Authorization: Bearer <access_token>" \
+  -F "fName=Ahmed" \
+  -F "fatherOrguardian=Ali Khan" \
+  -F "rollNumber=CS-2024-001" \
+  -F "parentOrGuardianPhone=03001234567" \
+  -F "gender=Male" \
+  -F "dob=2005-03-15" \
+  -F "classId=1" \
+  -F "programId=2" \
+  -F 'documents=[]'
+```
+
+---
+
+### PATCH /api/student/update
+
+Update an existing student's details. Accepts `multipart/form-data`.
+
+<ParamField query="studentID" type="number" required>
+  ID of the student to update.
+</ParamField>
+
+All body fields from the create endpoint are accepted as optional updates.
+
+```bash
+curl -X PATCH "http://localhost:3003/api/student/update?studentID=42" \
+  -H "Authorization: Bearer <access_token>" \
+  -F "fName=Ahmed Updated"
+```
+
+---
+
+### DELETE /api/student/remove
+
+Delete a student record.
+
+<ParamField query="studentID" type="number" required>
+  ID of the student to delete.
+</ParamField>
+
+```bash
+curl -X DELETE "http://localhost:3003/api/student/remove?studentID=42" \
+  -H "Authorization: Bearer <access_token>"
+```
+
+---
+
+### PATCH /api/student/promote
+
+Promote a student to the next class. Optionally specify a target class and section.
+
+<ParamField query="studentID" type="number" required>
+  Student ID.
+</ParamField>
+
+<ParamField query="forcePromote" type="boolean">
+  Set to `true` to bypass promotion eligibility checks.
+</ParamField>
+
+<ParamField query="targetClassId" type="number">
+  Override the target class for promotion.
+</ParamField>
+
+<ParamField query="targetSectionId" type="number">
+  Override the target section for promotion.
+</ParamField>
+
+---
+
+### PATCH /api/student/expel
+
+Expel a student. The reason is stored in the student's record.
+
+<ParamField query="studentID" type="number" required>
+  Student ID.
+</ParamField>
+
+<ParamField body="reason" type="string" required>
+  Reason for expulsion.
+</ParamField>
+
+---
+
+### PATCH /api/student/rejoin
+
+Re-enroll a previously expelled or struck-off student.
+
+<ParamField query="studentID" type="number" required>
+  Student ID.
+</ParamField>
+
+<ParamField body="reason" type="string" required>
+  Reason for re-enrollment.
+</ParamField>

@@ -1,0 +1,459 @@
+---
+title: "Database schema"
+description: "Prisma schema models, relationships, and enums for Concordia PSH."
+---
+
+Concordia PSH uses MySQL 8.0 with [Prisma ORM](https://www.prisma.io/). The full schema is defined in `backend/prisma/schema.prisma`.
+
+<Note>
+  To seed the initial super admin account, run `npx ts-node prisma/seed.ts` inside the `backend` container after the database is ready. The seed script is configured in `package.json` under `prisma.seed`.
+</Note>
+
+## Enums
+
+| Enum | Values | Used on |
+|---|---|---|
+| `Role` | `SUPER_ADMIN`, `ADMIN` | `admin.role` |
+| `ProgramLevel` | `INTERMEDIATE`, `UNDERGRADUATE`, `COACHING`, `DIPLOMA`, `SHORT_COURSE` | `Program.level` |
+| `StaffType` | `PERMANENT`, `CONTRACT` | `Staff.staffType` |
+| `StaffStatus` | `ACTIVE`, `TERMINATED`, `RETIRED` | `Staff.status` |
+| `StudentStatus` | `ACTIVE`, `EXPELLED`, `STRUCK_OFF`, `GRADUATED` | `Student.status` |
+| `AttendanceStatus` | `PRESENT`, `ABSENT`, `LEAVE`, `HALF_DAY`, `HOLIDAY` | `Attendance.status`, `StaffAttendance.status` |
+| `LeaveStatus` | `PENDING`, `APPROVED`, `REJECTED`, `CANCELLED` | `Leave.status` |
+| `StaffLeaveStatus` | `PENDING`, `APPROVED`, `REJECTED`, `CANCELLED` | `StaffLeave.status` |
+| `StaffLeaveType` | `CASUAL`, `SICK`, `ANNUAL`, `MATERNITY`, `PATERNITY`, `UNPAID`, `OTHER` | `StaffLeave` |
+| `InquiryStatus` | `NEW`, `APPROVED`, `REJECTED`, `FOLLOW_UP` | `Inquiry.status` |
+| `ComplaintType` | `Parent`, `Student`, `Staff` | `Complaint.type` |
+| `ComplaintStatus` | `Pending`, `In_Progress`, `Resolved`, `Rejected` | `Complaint.status` |
+| `ContactCategory` | `Emergency`, `Academic`, `Technical`, `Maintenance`, `Other` | `Contact.category` |
+| `ChallanStatus` | `PENDING`, `PAID`, `OVERDUE`, `PARTIAL` | `FeeChallan.status` |
+| `InstallmentStatus` | `PENDING`, `PARTIAL`, `PAID` | `StudentFeeInstallment.status` |
+| `ChallanType` | `INSTALLMENT`, `ARREARS_ONLY`, `FEE_HEADS_ONLY`, `MIXED` | `FeeChallan.challanType` |
+| `EmployeeDepartment` | `ADMIN`, `FINANCE`, `SECURITY`, `TRANSPORT`, `CLASS_4`, `MAINTENANCE`, `IT_SUPPORT`, `LIBRARY`, `LAB`, `OTHER` | `Staff.empDepartment` |
+| `EmploymentType` | `PERMANENT`, `CONTRACT` | staff employment context |
+
+## Model groups
+
+<AccordionGroup>
+  <Accordion title="Admin and authentication">
+    ### `admin`
+
+    Represents an admin or super admin user who can log in to the panel.
+
+    | Field | Type | Notes |
+    |---|---|---|
+    | `id` | `Int` | Auto-increment primary key |
+    | `name` | `String` | Display name (max 50 chars) |
+    | `email` | `String` | Unique login email |
+    | `password` | `String` | Bcrypt-hashed password |
+    | `role` | `Role` | `SUPER_ADMIN` or `ADMIN` (default: `ADMIN`) |
+    | `permissions` | `Json` | Module permission map (default: `{}`) |
+
+    Relations: an admin can approve student leaves (`approvals`) and mark staff attendance (`attendanceMarked`).
+  </Accordion>
+
+  <Accordion title="Academic structure">
+    ### `Department`
+
+    Top-level organizational unit. Has an optional head of department (`hod`) linked to a `Staff` record.
+
+    Relations: one `Department` → many `Staff`, many `Student`, many `Program`.
+
+    ---
+
+    ### `Program`
+
+    An academic program (e.g., FSc, BS Computer Science, Diploma in IT). Belongs to a `Department`.
+
+    | Field | Type | Notes |
+    |---|---|---|
+    | `level` | `ProgramLevel` | Classifies the program type |
+    | `duration` | `String` | e.g., `"2 years"` |
+    | `rollPrefix` | `String?` | Prefix used for roll number generation |
+
+    Relations: one `Program` → many `Class`, many `Student`, many `Inquiry`, many `Exam`, many `FeeStructure`.
+
+    ---
+
+    ### `Class`
+
+    A year or semester within a program (e.g., "11th", "Semester 3").
+
+    | Field | Type | Notes |
+    |---|---|---|
+    | `year` | `Int?` | Year number (11, 12, 1, 2 …) |
+    | `semester` | `Int?` | Semester number (1–8, for BS programs) |
+    | `isSemester` | `Boolean` | `true` for semester-based programs |
+
+    Unique constraint: `(programId, year, semester)`.
+
+    Relations: one `Class` → many `Section`, many `Subject`, many `Student`, many `Exam`, many `FeeStructure`.
+
+    ---
+
+    ### `Section`
+
+    A class is divided into sections (e.g., Section A, Morning, Evening). Unique per class: `(classId, name)`.
+
+    Relations: one `Section` → many `Student`, many `Timetable`, many `Assignment`.
+
+    ---
+
+    ### `Subject`
+
+    A subject taught within a class. Has an optional `code` and `creditHours`.
+
+    Relations: linked to `Timetable`, `Assignment`, `Attendance`, `ExamSchedule`, and teacher mappings.
+  </Accordion>
+
+  <Accordion title="Staff and teachers">
+    ### `Staff`
+
+    A unified model for both teaching staff (teachers) and non-teaching employees.
+
+    | Field | Type | Notes |
+    |---|---|---|
+    | `isTeaching` | `Boolean` | `true` for teachers |
+    | `isNonTeaching` | `Boolean` | `true` for administrative/support staff |
+    | `staffType` | `StaffType` | `PERMANENT` or `CONTRACT` |
+    | `status` | `StaffStatus` | `ACTIVE`, `TERMINATED`, or `RETIRED` |
+    | `basicPay` | `Decimal?` | Monthly basic salary |
+    | `designation` | `String?` | Job title for non-teaching staff |
+    | `empDepartment` | `EmployeeDepartment?` | Department for non-teaching staff |
+    | `permissions` | `Json?` | Module access permissions |
+    | `photo_url` | `String?` | Cloudinary URL |
+    | `photo_public_id` | `String?` | Cloudinary public ID for deletion |
+
+    Relations: `TeacherSubjectMapping`, `TeacherClassSectionMapping`, `Timetable`, `Assignment`, `Attendance`, `StaffAttendance`, `Payroll`, `StaffLeave`, `AdvanceSalary`, `Complaint`.
+
+    ---
+
+    ### `TeacherSubjectMapping`
+
+    Many-to-many join between `Staff` (teachers) and `Subject`. Unique per `(teacherId, subjectId)`.
+
+    ---
+
+    ### `TeacherClassSectionMapping`
+
+    Assigns a teacher to a class (and optionally a specific section). `sectionId = NULL` means the teacher covers all sections of that class.
+  </Accordion>
+
+  <Accordion title="Students">
+    ### `Student`
+
+    Core student record.
+
+    | Field | Type | Notes |
+    |---|---|---|
+    | `rollNumber` | `String` | Unique roll number |
+    | `status` | `StudentStatus` | `ACTIVE`, `EXPELLED`, `STRUCK_OFF`, or `GRADUATED` |
+    | `passedOut` | `Boolean` | `true` when the student has completed the program |
+    | `tuitionFee` | `Int?` | Custom per-student tuition override |
+    | `numberOfInstallments` | `Int?` | How many installments the student pays |
+    | `documents` | `Json` | Uploaded document metadata |
+    | `photo_url` | `String?` | Cloudinary URL |
+
+    Relations: belongs to `Department`, `Program`, `Class`, `Section`. Has `Marks`, `Result`, `Leave`, `Attendance`, `HostelRegistration`, `FeeChallan`, `StudentArrear`.
+
+    Optional `inquiryId` links a student back to the `Inquiry` record they were converted from.
+
+    ---
+
+    ### `StudentStatusHistory`
+
+    Audit trail of status changes for a student (e.g., ACTIVE → EXPELLED). Stores `previousStatus`, `newStatus`, and an optional `reason`.
+  </Accordion>
+
+  <Accordion title="Attendance">
+    ### `Attendance`
+
+    Records per-student, per-subject, per-day attendance.
+
+    | Field | Type | Notes |
+    |---|---|---|
+    | `status` | `AttendanceStatus` | `PRESENT`, `ABSENT`, `LEAVE`, `HALF_DAY`, `HOLIDAY` |
+    | `autoGenerated` | `Boolean` | `true` if created by the cron job |
+
+    Unique constraint: `(studentId, classId, sectionId, subjectId, date)` — one record per student per subject per day.
+
+    ---
+
+    ### `StaffAttendance`
+
+    Records daily attendance for staff members. Unique per `(staffId, date)`. Marked by an admin.
+
+    ---
+
+    ### `Leave`
+
+    Student leave request with `fromDate`/`toDate`, a `reason`, and approval workflow (`LeaveStatus`). Approved or rejected by an admin.
+
+    ---
+
+    ### `StaffLeave`
+
+    Leave request for teaching or non-teaching staff. Tracks `days`, `reason`, and `StaffLeaveStatus`.
+
+    ---
+
+    ### `Holiday`
+
+    Institution-wide holidays. Supports `repeatYearly` for recurring holidays.
+  </Accordion>
+
+  <Accordion title="Examinations">
+    ### `Exam`
+
+    An examination event tied to a `Program` and optionally a `Class`. Stores `session`, `type`, `startDate`, `endDate`.
+
+    ---
+
+    ### `ExamSchedule`
+
+    A specific paper slot within an exam: which `Subject`, on which `date`, at what `startTime`/`endTime`, in which `room`. Unique per `(examId, subjectId)`.
+
+    ---
+
+    ### `Marks`
+
+    Per-student, per-subject marks for an exam. Stores `totalMarks`, `obtainedMarks`, `isAbsent`, and optional `teacherRemarks`. Unique per `(studentId, examId, subject)`.
+
+    ---
+
+    ### `Result`
+
+    Computed result for a student in an exam: `percentage`, `gpa`, `grade`, `position`.
+
+    ---
+
+    ### `Position`
+
+    Class ranking for a student in an exam. Unique per `(examId, classId, studentId)`.
+
+    ---
+
+    ### `ReportCardTemplate`
+
+    HTML template for generating printable report cards. One template can be marked `isDefault`.
+  </Accordion>
+
+  <Accordion title="Fee management">
+    ### `FeeHead`
+
+    A named fee component (e.g., tuition, lab fee, examination fee). Boolean flags identify the fee type.
+
+    ---
+
+    ### `FeeStructure`
+
+    The fee plan for a specific `Program` + `Class` combination. Stores `totalAmount` and number of `installments`. Unique per `(programId, classId)`.
+
+    ---
+
+    ### `FeeStructureHead`
+
+    Join table between `FeeStructure` and `FeeHead`. Stores the `amount` for each fee component within a structure.
+
+    ---
+
+    ### `FeeChallan`
+
+    A fee payment challan issued to a student.
+
+    | Field | Type | Notes |
+    |---|---|---|
+    | `challanNumber` | `String` | Unique challan identifier |
+    | `status` | `ChallanStatus` | `PENDING`, `PAID`, `OVERDUE`, `PARTIAL` |
+    | `challanType` | `ChallanType?` | `INSTALLMENT`, `ARREARS_ONLY`, `FEE_HEADS_ONLY`, `MIXED` |
+    | `amount` | `Float` | Total amount due |
+    | `paidAmount` | `Float` | Amount received |
+    | `discount` | `Float` | Discount applied |
+    | `fineAmount` | `Float` | Late fee fine |
+    | `includesArrears` | `Boolean` | Whether this challan covers outstanding arrears |
+    | `studentClassId` | `Int?` | Snapshot of student's class at challan creation |
+    | `studentProgramId` | `Int?` | Snapshot of student's program at challan creation |
+
+    The session snapshot fields (`studentClassId`, `studentProgramId`, `studentSectionId`) ensure challans remain correctly classified after a student is promoted to a new class.
+
+    ---
+
+    ### `StudentFeeInstallment`
+
+    Tracks the payment status of each installment for a student in a given class. Unique per `(studentId, classId, installmentNumber)`.
+
+    ---
+
+    ### `StudentArrear`
+
+    Tracks outstanding fee debt carried over from a previous session. Unique per `(studentId, classId, programId)`.
+  </Accordion>
+
+  <Accordion title="HR and payroll">
+    ### `Payroll`
+
+    Monthly payroll record for a staff member. Stores itemized deductions (absent, leave, advance, tax, EOBI) and allowances (travel, house rent, medical), plus the computed `netSalary`. Unique per `(staffId, month)`.
+
+    ---
+
+    ### `PayrollSettings`
+
+    Institution-wide payroll configuration: deduction amounts per absent/leave day and the number of free absents/leaves allowed per period.
+
+    ---
+
+    ### `AdvanceSalary`
+
+    Records an advance salary payment. The `adjusted` flag indicates whether it has been deducted from a payroll record.
+
+    ---
+
+    ### `PayrollTemplate`
+
+    HTML template for salary slips or payroll sheets. One template can be marked `isDefault`.
+  </Accordion>
+
+  <Accordion title="Hostel">
+    ### `HostelRegistration`
+
+    Links a student (or an external resident) to a hostel. Stores `hostelName`, `registrationDate`, and `status` (`active`/`inactive`).
+
+    ---
+
+    ### `Room`
+
+    A hostel room with a `roomType` (`single`/`double`/`triple`), `capacity`, and `currentOccupancy`. Status: `vacant`, `occupied`, or `maintenance`.
+
+    ---
+
+    ### `RoomAllocation`
+
+    Assigns a student (or external resident) to a specific room. Unique per `(roomId, studentId)`.
+
+    ---
+
+    ### `HostelExpense`
+
+    Tracks hostel-specific expenses (e.g., maintenance, supplies).
+
+    ---
+
+    ### `HostelInventory`
+
+    Inventory items within the hostel (furniture, electronics, bedding). Tracks `quantity`, `condition`, and the room the item is allocated to.
+  </Accordion>
+
+  <Accordion title="Inventory">
+    ### `SchoolInventory`
+
+    School-wide inventory items (lab equipment, sports equipment, etc.). Tracks `quantity`, `unitPrice`, `totalValue`, `purchaseDate`, `condition`, and assignment details.
+
+    ---
+
+    ### `InventoryExpense`
+
+    Expense records tied to a specific inventory item (maintenance, repair, upgrade). Linked via `inventoryItemId`.
+  </Accordion>
+
+  <Accordion title="Finance">
+    ### `FinanceIncome`
+
+    A general income entry with `date`, `category`, `description`, and `amount`.
+
+    ---
+
+    ### `FinanceExpense`
+
+    A general expense entry with `date`, `category`, `description`, and `amount`.
+
+    ---
+
+    ### `FinanceClosing`
+
+    A period-closing record summarizing `totalIncome`, `totalExpense`, and `netBalance` for a given date and `type`.
+  </Accordion>
+
+  <Accordion title="Front office">
+    ### `Inquiry`
+
+    A prospective student inquiry. Stores contact details, program of interest, and `InquiryStatus`. Approved inquiries can be converted to `Student` records.
+
+    ---
+
+    ### `Visitor`
+
+    A visitor log entry with `inTime`, `outTime`, `purpose`, and number of persons.
+
+    ---
+
+    ### `Complaint`
+
+    A complaint from a parent, student, or staff member. Assigned to a staff member for resolution. Tracks `ComplaintStatus`.
+
+    ---
+
+    ### `Contact`
+
+    An institutional contact directory entry categorized by `ContactCategory` (Emergency, Academic, Technical, etc.).
+  </Accordion>
+
+  <Accordion title="Configuration">
+    ### `InstituteSettings`
+
+    A single-row settings table for the institution: name, contact info, logo URL, challan prefix, and default late fee fine.
+
+    ---
+
+    ### `FeeChallanTemplate`
+
+    HTML template for printed fee challans.
+
+    ---
+
+    ### `StaffIDCardTemplate`
+
+    HTML template for staff ID cards.
+
+    ---
+
+    ### `StudentIDCardTemplate`
+
+    HTML template for student ID cards.
+  </Accordion>
+</AccordionGroup>
+
+## Key relationships
+
+```
+Department
+└── Staff (many, via DepartmentStaff)
+└── Student (many, via DepartmentStudents)
+└── Program (many, via DepartmentPrograms)
+    └── Class (many, via ProgramClasses)
+        └── Section (many, via ClassSections)
+            └── Student (many, via SectionStudents)
+        └── Subject (many, via ClassSubjects)
+        └── FeeStructure (one per Program+Class)
+            └── FeeStructureHead → FeeHead
+    └── Exam
+        └── ExamSchedule → Subject
+        └── Marks → Student
+        └── Result → Student
+        └── Position → Student
+
+Staff
+└── TeacherSubjectMapping → Subject
+└── TeacherClassSectionMapping → Class + Section
+└── Timetable → Class + Section + Subject
+└── Payroll (monthly)
+└── StaffAttendance (daily)
+
+Student
+└── Attendance → Class + Section + Subject
+└── Leave (approval by admin)
+└── FeeChallan → FeeStructure
+└── StudentFeeInstallment
+└── StudentArrear
+└── HostelRegistration
+└── RoomAllocation → Room
+```

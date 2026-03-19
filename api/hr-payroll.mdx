@@ -1,0 +1,286 @@
+---
+title: "HR & Payroll API"
+description: "Manage payroll, staff leaves, advance salaries, staff attendance, holidays, and payroll templates."
+---
+
+<Info>
+  All endpoints require JWT authentication via the `Authorization: Bearer <token>` header or the `access_token` cookie.
+</Info>
+
+## Endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/hr/payroll-settings` | Get payroll settings |
+| `PATCH` | `/api/hr/payroll-settings` | Update payroll settings |
+| `GET` | `/api/hr/payroll-sheet` | Get payroll sheet for a month |
+| `GET` | `/api/hr/payroll-history` | Get payroll history for a staff member |
+| `POST` | `/api/hr/payroll` | Create or update a payroll entry |
+| `GET` | `/api/hr/leave-sheet` | Get leave sheet for a month |
+| `POST` | `/api/hr/leave` | Create or update a leave entry |
+| `GET` | `/api/hr/staff-attendance` | Get staff attendance for a date |
+| `POST` | `/api/hr/staff-attendance` | Mark staff attendance |
+| `GET` | `/api/hr/attendance-summary` | Get monthly attendance summary |
+| `POST` | `/api/hr/holidays` | Create a holiday |
+| `GET` | `/api/hr/holidays` | List holidays |
+| `DELETE` | `/api/hr/holidays` | Delete a holiday |
+| `POST` | `/api/hr/advance-salary` | Record an advance salary |
+| `GET` | `/api/hr/advance-salary` | List advance salaries |
+| `PATCH` | `/api/hr/advance-salary` | Update an advance salary |
+| `DELETE` | `/api/hr/advance-salary` | Delete an advance salary |
+| `POST` | `/api/hr/payroll-template` | Create a payroll template |
+| `GET` | `/api/hr/payroll-template` | List payroll templates |
+| `PATCH` | `/api/hr/payroll-template` | Update a payroll template |
+| `DELETE` | `/api/hr/payroll-template` | Delete a payroll template |
+
+---
+
+## Payroll settings
+
+### GET /api/hr/payroll-settings
+
+Return the current payroll configuration (deduction rules, allowance settings, etc.).
+
+```bash
+curl http://localhost:3003/api/hr/payroll-settings \
+  -H "Authorization: Bearer <access_token>"
+```
+
+### PATCH /api/hr/payroll-settings
+
+Update payroll configuration. Send only the fields you want to change.
+
+---
+
+## Payroll
+
+### GET /api/hr/payroll-sheet
+
+Return the payroll sheet (all staff salary data) for a given month.
+
+<ParamField query="month" type="string" required>
+  Month in `YYYY-MM` format (e.g. `2025-03`).
+</ParamField>
+
+<ParamField query="type" type="string" required>
+  Staff type: `teacher`, `employee`, or `all`.
+</ParamField>
+
+```bash
+curl "http://localhost:3003/api/hr/payroll-sheet?month=2025-03&type=all" \
+  -H "Authorization: Bearer <access_token>"
+```
+
+### GET /api/hr/payroll-history
+
+Return payroll history for a specific staff member.
+
+<ParamField query="staffId" type="number" required>
+  Staff member ID.
+</ParamField>
+
+<ParamField query="type" type="string" required>
+  Staff type: `teacher`, `employee`, or `all`.
+</ParamField>
+
+### POST /api/hr/payroll
+
+Create or update (upsert) a payroll entry for a staff member.
+
+<Note>
+  The request body shape mirrors the payroll record: staffId, month, basicPay, allowances, deductions, netPay, status, etc. The exact fields depend on the payroll settings configuration.
+</Note>
+
+```bash
+curl -X POST http://localhost:3003/api/hr/payroll \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"staffId": 5, "month": "2025-03", "basicPay": 50000, "netPay": 47000, "status": "PAID"}'
+```
+
+---
+
+## Leaves
+
+### GET /api/hr/leave-sheet
+
+Return the staff leave sheet for a given month.
+
+<ParamField query="month" type="string" required>
+  Month in `YYYY-MM` format.
+</ParamField>
+
+<ParamField query="type" type="string" required>
+  Staff type: `teacher`, `employee`, or `all`.
+</ParamField>
+
+### POST /api/hr/leave
+
+Create or update a leave record for a staff member.
+
+```bash
+curl -X POST http://localhost:3003/api/hr/leave \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"staffId": 5, "month": "2025-03", "leaveDays": 2, "leaveType": "SICK"}'
+```
+
+---
+
+## Staff attendance
+
+### GET /api/hr/staff-attendance
+
+Return staff attendance records for a specific date.
+
+<ParamField query="date" type="string" required>
+  Date in ISO format (e.g. `2025-03-15`).
+</ParamField>
+
+```bash
+curl "http://localhost:3003/api/hr/staff-attendance?date=2025-03-15" \
+  -H "Authorization: Bearer <access_token>"
+```
+
+### POST /api/hr/staff-attendance
+
+Mark attendance for a staff member. Requires authentication; the marking admin's ID is recorded automatically.
+
+<ParamField body="staffId" type="number">
+  Unified staff member ID.
+</ParamField>
+
+<ParamField body="date" type="string" required>
+  Attendance date (ISO string).
+</ParamField>
+
+<ParamField body="status" type="string" required>
+  Attendance status (e.g. `PRESENT`, `ABSENT`, `LEAVE`).
+</ParamField>
+
+<ParamField body="notes" type="string">
+  Optional notes.
+</ParamField>
+
+```bash
+curl -X POST http://localhost:3003/api/hr/staff-attendance \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"staffId": 5, "date": "2025-03-15", "status": "PRESENT"}'
+```
+
+### GET /api/hr/attendance-summary
+
+Get a monthly attendance summary for a staff member.
+
+<ParamField query="month" type="string" required>
+  Month in `YYYY-MM` format.
+</ParamField>
+
+<ParamField query="staffId" type="number" required>
+  Staff member ID.
+</ParamField>
+
+<ParamField query="type" type="string" required>
+  Staff type (currently supports `TEACHER`).
+</ParamField>
+
+---
+
+## Holidays
+
+### POST /api/hr/holidays
+
+Create a holiday entry.
+
+<Note>
+  The request body typically includes `date`, `name`, and `type` fields.
+</Note>
+
+```bash
+curl -X POST http://localhost:3003/api/hr/holidays \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"date": "2025-03-23", "name": "Pakistan Day", "type": "PUBLIC"}'
+```
+
+### GET /api/hr/holidays
+
+List holidays, optionally filtered by year and month.
+
+<ParamField query="year" type="number">
+  Filter by year.
+</ParamField>
+
+<ParamField query="month" type="number">
+  Filter by month (1–12).
+</ParamField>
+
+### DELETE /api/hr/holidays
+
+<ParamField query="id" type="number" required>
+  Holiday ID.
+</ParamField>
+
+---
+
+## Advance salaries
+
+### POST /api/hr/advance-salary
+
+Record an advance salary disbursement.
+
+```bash
+curl -X POST http://localhost:3003/api/hr/advance-salary \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"staffId": 5, "amount": 10000, "month": "2025-03", "reason": "Emergency"}'
+```
+
+### GET /api/hr/advance-salary
+
+<ParamField query="month" type="string">
+  Filter by month (`YYYY-MM`).
+</ParamField>
+
+<ParamField query="type" type="string">
+  Staff type: `teacher`, `employee`, or `all`.
+</ParamField>
+
+### PATCH /api/hr/advance-salary
+
+<ParamField query="id" type="number" required>
+  Advance salary record ID.
+</ParamField>
+
+### DELETE /api/hr/advance-salary
+
+<ParamField query="id" type="number" required>
+  Advance salary record ID.
+</ParamField>
+
+---
+
+## Payroll templates
+
+Payroll templates define reusable salary slip layouts.
+
+### POST /api/hr/payroll-template
+
+Create a payroll template.
+
+### GET /api/hr/payroll-template
+
+List all payroll templates.
+
+### PATCH /api/hr/payroll-template
+
+<ParamField query="id" type="number" required>
+  Template ID.
+</ParamField>
+
+### DELETE /api/hr/payroll-template
+
+<ParamField query="id" type="number" required>
+  Template ID.
+</ParamField>

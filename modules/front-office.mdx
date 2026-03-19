@@ -1,0 +1,141 @@
+---
+title: "Front Office"
+description: "Manage student inquiries, visitor logs, complaints, and the contact directory."
+---
+
+## Overview
+
+The Front Office module handles all walk-in and pre-enrollment interactions. Admins use it to track prospective students through an inquiry pipeline, log visitor entry and exit, manage complaints from parents, students, and staff, and maintain a directory of key contacts.
+
+## Key features
+
+<CardGroup cols={2}>
+  <Card title="Inquiry management" icon="clipboard-list">
+    Track prospective student inquiries from initial contact through approval or rejection. Approved inquiries convert directly into student enrollment.
+  </Card>
+  <Card title="Visitor log" icon="door-open">
+    Record visitor name, ID card number, purpose of visit, number of persons, and in/out times. Filter logs by month.
+  </Card>
+  <Card title="Complaint handling" icon="triangle-exclamation">
+    Log and track complaints from parents, students, or staff. Assign complaints to staff members and update status as work progresses.
+  </Card>
+  <Card title="Contact directory" icon="address-book">
+    Maintain a categorized list of emergency, academic, technical, maintenance, and other important contacts.
+  </Card>
+</CardGroup>
+
+## Workflows
+
+<Tabs>
+  <Tab title="Inquiries">
+    <Steps>
+      <Step title="Create an inquiry">
+        Record the prospective student's name, father's name, CNIC, contact number, address, email, program of interest, previous institute, and any remarks.
+      </Step>
+      <Step title="Follow up">
+        Update the inquiry status to `FOLLOW_UP` to indicate ongoing communication.
+      </Step>
+      <Step title="Approve or reject">
+        Change status to `APPROVED` or `REJECTED` based on the outcome of the follow-up.
+      </Step>
+      <Step title="Convert to student">
+        Once approved, the inquiry can be converted to a student enrollment record. The new student record links back to the inquiry via `inquiryId`.
+      </Step>
+      <Step title="Rollback if needed">
+        If a student record was created in error from an inquiry, use the rollback action to delete the student record and reset the inquiry status back to `NEW`.
+      </Step>
+    </Steps>
+  </Tab>
+  <Tab title="Visitors">
+    <Steps>
+      <Step title="Log a visitor">
+        Enter visitor name, phone number, ID card number, visit date, number of persons, purpose, and check-in time.
+      </Step>
+      <Step title="Record checkout">
+        Update the visitor record with the check-out time when the visitor leaves.
+      </Step>
+      <Step title="Review visitor logs">
+        Filter the visitor list by month to review visit history.
+      </Step>
+    </Steps>
+  </Tab>
+  <Tab title="Complaints">
+    <Steps>
+      <Step title="Log a complaint">
+        Select the complaint type (Parent, Student, or Staff), enter the complainant's name, contact number, subject, and detailed description.
+      </Step>
+      <Step title="Assign to staff">
+        Optionally assign the complaint to a staff member responsible for resolution.
+      </Step>
+      <Step title="Update status">
+        Change status through the workflow: `Pending` → `In_Progress` → `Resolved` or `Rejected`.
+      </Step>
+    </Steps>
+  </Tab>
+  <Tab title="Contacts">
+    <Steps>
+      <Step title="Add a contact">
+        Enter name, phone, email, category (Emergency, Academic, Technical, Maintenance, or Other), and any relevant details.
+      </Step>
+      <Step title="Edit or remove">
+        Update contact information or delete contacts that are no longer relevant.
+      </Step>
+    </Steps>
+  </Tab>
+</Tabs>
+
+## Data fields
+
+<AccordionGroup>
+  <Accordion title="Inquiry">
+    | Field | Description |
+    |-------|-------------|
+    | `studentName` | Prospective student's full name |
+    | `fatherName` | Father's name |
+    | `fatherCnic` | Father's CNIC number |
+    | `contactNumber` | Primary contact phone |
+    | `email` | Email address |
+    | `address` | Home address |
+    | `programInterest` | ID of the program the student is interested in |
+    | `previousInstitute` | Name of previously attended institution |
+    | `remarks` | Staff notes |
+    | `status` | `NEW`, `FOLLOW_UP`, `APPROVED`, or `REJECTED` |
+  </Accordion>
+  <Accordion title="Visitor">
+    | Field | Description |
+    |-------|-------------|
+    | `visitorName` | Full name of the visitor |
+    | `phone` | Visitor's phone number |
+    | `IDCard` | National ID card number |
+    | `date` | Date of visit |
+    | `persons` | Number of people accompanying the visitor |
+    | `inTime` | Check-in time |
+    | `outTime` | Check-out time (optional) |
+    | `purpose` | Reason for the visit |
+    | `remarks` | Optional staff notes |
+  </Accordion>
+  <Accordion title="Complaint">
+    | Field | Description |
+    |-------|-------------|
+    | `type` | `Parent`, `Student`, or `Staff` |
+    | `complainantName` | Name of the person filing the complaint |
+    | `contact` | Contact number of the complainant |
+    | `subject` | Brief subject line |
+    | `description` | Full complaint text |
+    | `status` | `Pending`, `In_Progress`, `Resolved`, or `Rejected` |
+    | `assignedToId` | ID of the staff member assigned to handle it |
+  </Accordion>
+  <Accordion title="Contact">
+    | Field | Description |
+    |-------|-------------|
+    | `name` | Contact person's name |
+    | `phone` | Contact phone number |
+    | `email` | Contact email address |
+    | `category` | `Emergency`, `Academic`, `Technical`, `Maintenance`, or `Other` |
+    | `details` | Additional notes or description |
+  </Accordion>
+</AccordionGroup>
+
+## Permissions
+
+This module requires the `front-office` permission in `admin.permissions.modules`.

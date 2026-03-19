@@ -1,0 +1,139 @@
+---
+title: "Fee Management"
+description: "Define fee structures, generate challans, process payments, and track arrears across academic sessions."
+---
+
+## Overview
+
+The Fee Management module handles all student fee operations. Admins configure fee heads and fee structures, generate fee challans for individual students or entire classes, mark challans as paid, and track unpaid arrears when students are promoted to a new class. The module integrates with the Finance module: all paid challans appear as income entries.
+
+## Key features
+
+<CardGroup cols={2}>
+  <Card title="Fee heads" icon="tag">
+    Define individual fee components (tuition, lab, library, registration, admission, prospectus, examination, allied charges, hostel, fine, discount) with a default amount and type flags.
+  </Card>
+  <Card title="Fee structures" icon="table">
+    Map a combination of program + class to a total fee amount, number of installments, and a list of fee heads. Each program-class combination has at most one structure.
+  </Card>
+  <Card title="Challan generation" icon="receipt">
+    Generate challans from student installment plans for a given month. Supports individual student mode (with custom amounts) and bulk class mode.
+  </Card>
+  <Card title="Challan types" icon="layer-group">
+    Challans are typed: `INSTALLMENT` (regular), `ARREARS_ONLY` (previous unpaid amounts), `FEE_HEADS_ONLY` (extra charges only), or `MIXED` (combination).
+  </Card>
+  <Card title="Payment processing" icon="credit-card">
+    Mark a challan as PAID or PARTIAL. The system calculates late fees dynamically, allocates payments between tuition and additional charges, and updates installment plan records.
+  </Card>
+  <Card title="Arrears tracking" icon="clock-rotate-left">
+    Unpaid installments carry forward as arrear records when a student is promoted. Arrears can be included in future challans.
+  </Card>
+  <Card title="Student fee summary" icon="file-invoice">
+    View a per-student summary grouped by academic session showing total fees, paid amounts, remaining dues, and a breakdown of additional charges paid.
+  </Card>
+  <Card title="Fee challan templates" icon="print">
+    Store HTML templates for printing fee challans. One template is designated as the default.
+  </Card>
+</CardGroup>
+
+## Workflows
+
+<Tabs>
+  <Tab title="Set up fee structure">
+    <Steps>
+      <Step title="Create fee heads">
+        Define each fee component (e.g., Tuition Fee, Lab Fee) with a default amount and the appropriate type flag (`isTuition`, `isLabFee`, etc.).
+      </Step>
+      <Step title="Create a fee structure">
+        Select a program and class. Set the total amount and number of installments. Attach the relevant fee heads.
+      </Step>
+    </Steps>
+  </Tab>
+  <Tab title="Generate challans">
+    <Steps>
+      <Step title="Select target">
+        Choose to generate for a single student or bulk (program/class/section). Select the billing month (YYYY-MM).
+      </Step>
+      <Step title="Set amounts (individual mode)">
+        Optionally override the tuition amount, add extra fee heads, or specify an arrears amount. Set a custom due date if needed.
+      </Step>
+      <Step title="Generate">
+        The system matches each student's installment plan entry for the selected month. Challans are created with the appropriate type and amounts. Students without a matching installment for the month are skipped.
+      </Step>
+      <Step title="Review results">
+        The response lists each student with status: `CREATED`, `SKIPPED`, or `FAILED`.
+      </Step>
+    </Steps>
+  </Tab>
+  <Tab title="Record payment">
+    <Steps>
+      <Step title="Find the challan">
+        Search by student name, roll number, challan number, or installment number. Filter by status or date range.
+      </Step>
+      <Step title="Update status">
+        Change status to `PAID` or `PARTIAL`. Enter the paid amount and payment date.
+      </Step>
+      <Step title="Late fee calculation">
+        If the challan is overdue, the system calculates a dynamic late fee based on `lateFeeFine × days overdue` from institute settings.
+      </Step>
+      <Step title="Installment tracking">
+        Payment is allocated first to tuition (FIFO across arrear installments, then current month), then to additional charges. Installment records are updated accordingly.
+      </Step>
+    </Steps>
+  </Tab>
+</Tabs>
+
+## Data fields
+
+<AccordionGroup>
+  <Accordion title="Fee head">
+    | Field | Description |
+    |-------|-------------|
+    | `name` | Fee component name (unique) |
+    | `amount` | Default amount |
+    | `isTuition` | Tuition fee flag |
+    | `isLabFee`, `isLibraryFee`, etc. | Category flags for each fee type |
+    | `isDiscount` | Marks this head as a discount (negative component) |
+  </Accordion>
+  <Accordion title="Fee structure">
+    | Field | Description |
+    |-------|-------------|
+    | `programId` | Linked program |
+    | `classId` | Linked class |
+    | `totalAmount` | Total fee for the session |
+    | `installments` | Number of installments |
+    | `feeHeads` | List of attached fee heads with amounts |
+  </Accordion>
+  <Accordion title="Fee challan">
+    | Field | Description |
+    |-------|-------------|
+    | `challanNumber` | Unique 13-digit padded challan number |
+    | `studentId` | Linked student |
+    | `amount` | Tuition + arrears portion |
+    | `fineAmount` | Additional charges (extra fee heads) |
+    | `discount` | Discount applied |
+    | `paidAmount` | Total amount paid |
+    | `tuitionPaid` | Portion of payment applied to tuition |
+    | `additionalPaid` | Portion of payment applied to additional charges |
+    | `dueDate` | Payment due date |
+    | `paidDate` | Date payment was received |
+    | `status` | `PENDING`, `PAID`, `PARTIAL`, or `OVERDUE` |
+    | `challanType` | `INSTALLMENT`, `ARREARS_ONLY`, `FEE_HEADS_ONLY`, or `MIXED` |
+    | `installmentNumber` | Installment sequence number |
+    | `arrearsAmount` | Amount from previous unpaid installments |
+    | `studentClassId` / `studentProgramId` | Session snapshot at challan creation |
+  </Accordion>
+  <Accordion title="Student arrear">
+    | Field | Description |
+    |-------|-------------|
+    | `studentId` | Linked student |
+    | `classId` | Class where the debt originated |
+    | `programId` | Program where the debt originated |
+    | `arrearAmount` | Outstanding balance for this session |
+    | `lastInstallmentNumber` | Last installment number that was paid |
+  </Accordion>
+</AccordionGroup>
+
+## Permissions
+
+This module requires the `fee-management` permission in `admin.permissions.modules`.

@@ -1,0 +1,145 @@
+---
+title: "Academics"
+description: "Configure the academic structure including departments, programs, classes, sections, subjects, and timetables."
+---
+
+## Overview
+
+The Academics module defines the entire institutional hierarchy. Admins use it to create departments, programs, classes, and sections, then assign subjects and teachers. Timetables and assignments are also managed here. This structure underpins enrollment, attendance, examinations, and fee management.
+
+## Key features
+
+<CardGroup cols={2}>
+  <Card title="Department management" icon="sitemap">
+    Create academic departments with a name, description, and head of department (HOD). Programs are linked to departments.
+  </Card>
+  <Card title="Program management" icon="graduation-cap">
+    Define programs with a level (INTERMEDIATE, UNDERGRADUATE, COACHING, DIPLOMA, SHORT_COURSE), duration, and roll number prefix.
+  </Card>
+  <Card title="Class management" icon="chalkboard">
+    Create classes within programs. Classes use a year or semester numbering system. BS programs use the `isSemester` flag.
+  </Card>
+  <Card title="Section management" icon="users">
+    Create sections within classes with a name, capacity, and room assignment.
+  </Card>
+  <Card title="Subject management" icon="book">
+    Define subjects with a name, subject code, credit hours, and a description. Subjects belong to a specific class.
+  </Card>
+  <Card title="Teacher mappings" icon="user-tie">
+    Assign teachers to subjects (TeacherSubjectMapping) and to class-section combinations (TeacherClassSectionMapping).
+  </Card>
+  <Card title="Timetable" icon="calendar">
+    Create timetable slots specifying teacher, subject, class, section, day of week, start/end time, and room.
+  </Card>
+  <Card title="Assignments" icon="file-lines">
+    Create subject assignments for sections with a title, description, and due date.
+  </Card>
+</CardGroup>
+
+## Workflows
+
+<Tabs>
+  <Tab title="Setting up structure">
+    <Steps>
+      <Step title="Create a department">
+        Add a department with its name and an optional description. Assign a HOD after teaching staff are created.
+      </Step>
+      <Step title="Create a program">
+        Add a program under the department. Set the level, duration (e.g., `2 Years`), and a roll number prefix (e.g., `PSH-CS-BS`).
+      </Step>
+      <Step title="Create classes">
+        Add classes to the program. For year-based programs, set the `year` field. For semester-based (BS) programs, enable `isSemester` and set the `semester` number.
+      </Step>
+      <Step title="Create sections">
+        Add sections to each class. For example, `Section A` and `Section B` with room numbers and capacity.
+      </Step>
+      <Step title="Create subjects">
+        Add subjects to each class with subject codes and credit hours.
+      </Step>
+    </Steps>
+  </Tab>
+  <Tab title="Teacher assignments">
+    <Steps>
+      <Step title="Map teacher to subject">
+        Go to Teacher-Subject Mappings. Select a teacher and the subject they teach. Each teacher-subject pair must be unique.
+      </Step>
+      <Step title="Map teacher to class/section">
+        Go to Teacher-Class-Section Mappings. Assign a teacher to a class and optionally a specific section. A null section means the teacher covers all sections of that class.
+      </Step>
+    </Steps>
+  </Tab>
+  <Tab title="Timetable">
+    <Steps>
+      <Step title="Create a timetable slot">
+        Select teacher, subject, class, section (optional), day of week, start time (HH:MM), end time (HH:MM), and room. A conflict check prevents duplicate slots.
+      </Step>
+      <Step title="Update or remove slots">
+        Edit existing slots or delete them to maintain an accurate timetable.
+      </Step>
+    </Steps>
+  </Tab>
+</Tabs>
+
+## Data fields
+
+<AccordionGroup>
+  <Accordion title="Department">
+    | Field | Description |
+    |-------|-------------|
+    | `name` | Department name (unique) |
+    | `description` | Optional description |
+    | `hodId` | ID of the staff member who is Head of Department |
+  </Accordion>
+  <Accordion title="Program">
+    | Field | Description |
+    |-------|-------------|
+    | `name` | Program name |
+    | `level` | `INTERMEDIATE`, `UNDERGRADUATE`, `COACHING`, `DIPLOMA`, or `SHORT_COURSE` |
+    | `duration` | Duration string (e.g., `2 Years`, `4 Years`) |
+    | `rollPrefix` | Prefix used when generating student roll numbers (e.g., `PSH-CS-BS`) |
+    | `departmentId` | Linked department |
+  </Accordion>
+  <Accordion title="Class">
+    | Field | Description |
+    |-------|-------------|
+    | `name` | Class display name (e.g., `1st Year`, `Semester 3`) |
+    | `year` | Year number (1, 2, 3, 4) for year-based programs |
+    | `semester` | Semester number (1–8) for BS programs |
+    | `isSemester` | `true` if the class uses semester numbering |
+    | `rollPrefix` | Optional class-specific prefix for roll numbers |
+    | `programId` | Linked program |
+  </Accordion>
+  <Accordion title="Section">
+    | Field | Description |
+    |-------|-------------|
+    | `name` | Section name (e.g., `A`, `Morning`) |
+    | `capacity` | Maximum number of students |
+    | `room` | Room or classroom identifier |
+    | `classId` | Linked class |
+  </Accordion>
+  <Accordion title="Subject">
+    | Field | Description |
+    |-------|-------------|
+    | `name` | Subject name |
+    | `code` | Unique subject code |
+    | `creditHours` | Number of credit hours |
+    | `description` | Optional description |
+    | `classId` | Linked class |
+  </Accordion>
+  <Accordion title="Timetable slot">
+    | Field | Description |
+    |-------|-------------|
+    | `teacherId` | Assigned teacher |
+    | `subjectId` | Subject being taught |
+    | `classId` | Class the slot belongs to |
+    | `sectionId` | Section (null = all sections) |
+    | `dayOfWeek` | Day name (e.g., `Monday`) |
+    | `startTime` | Start time in HH:MM format |
+    | `endTime` | End time in HH:MM format |
+    | `room` | Room assignment |
+  </Accordion>
+</AccordionGroup>
+
+## Permissions
+
+This module requires the `academics` permission in `admin.permissions.modules`.

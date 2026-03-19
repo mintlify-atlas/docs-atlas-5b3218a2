@@ -1,0 +1,124 @@
+---
+title: "Finance"
+description: "Record and review income and expenses across all categories, and close periods with balance summaries."
+---
+
+## Overview
+
+The Finance module provides a consolidated view of the institution's financial activity. It combines manually entered income and expense records with data automatically pulled from fee challans (as income), payroll payments (as salary expenses), hostel expenses, and inventory purchases and maintenance costs. Admins can close periods (daily, weekly, or monthly) and store balance records for reporting.
+
+<Note>
+  Paid fee challans automatically appear under the **Fee** income category. Paid payroll records automatically appear under the **Salaries** expense category. Hostel expenses and inventory purchases appear under **Hostel** and **Inventory** categories respectively.
+</Note>
+
+## Key features
+
+<CardGroup cols={2}>
+  <Card title="Income recording" icon="arrow-trend-up">
+    Manually record income entries by category, date, description, and amount. View combined income including fee payments.
+  </Card>
+  <Card title="Expense recording" icon="arrow-trend-down">
+    Manually record expense entries by category, date, description, and amount. View combined expenses including payrolls, hostel, and inventory.
+  </Card>
+  <Card title="Period closing" icon="calendar-check">
+    Create closing records that store total income, total expense, and net balance for a specific date and period type (daily, weekly, monthly).
+  </Card>
+  <Card title="Finance dashboard" icon="chart-pie">
+    View aggregated income and expense totals for a date range, broken down by category, with a combined list of all transactions.
+  </Card>
+  <Card title="Category filtering" icon="filter">
+    Filter income or expenses by category (Fee, Salaries, Hostel, Inventory, or any manual category) and by date range.
+  </Card>
+  <Card title="Automatic integration" icon="plug">
+    No manual entry required for fee payments, payroll disbursements, hostel expenses, or inventory purchases—they are pulled in automatically.
+  </Card>
+</CardGroup>
+
+## Workflows
+
+<Tabs>
+  <Tab title="Record income">
+    <Steps>
+      <Step title="Navigate to Finance → Income">
+        Open the income list. Existing income entries including automatic fee payment entries are displayed.
+      </Step>
+      <Step title="Add a new entry">
+        Click add. Enter the date, category (e.g., Donations, Grants, Rental), description, and amount.
+      </Step>
+      <Step title="Save">
+        The entry is stored as a `FinanceIncome` record. It will appear in the income total.
+      </Step>
+    </Steps>
+  </Tab>
+  <Tab title="Record expense">
+    <Steps>
+      <Step title="Navigate to Finance → Expenses">
+        Open the expense list. Payroll, hostel, and inventory expenses appear automatically alongside manual entries.
+      </Step>
+      <Step title="Add a new entry">
+        Click add. Enter the date, category (e.g., Utilities, Rent, Supplies), description, and amount.
+      </Step>
+      <Step title="Save">
+        The entry is stored as a `FinanceExpense` record.
+      </Step>
+    </Steps>
+  </Tab>
+  <Tab title="Close a period">
+    <Steps>
+      <Step title="Navigate to Finance → Closing">
+        Open the closing records list.
+      </Step>
+      <Step title="Create a closing entry">
+        Enter the date, type (daily, weekly, or monthly), total income, total expense, and net balance. Add optional remarks.
+      </Step>
+      <Step title="Save">
+        The closing record is stored as a `FinanceClosing` entry for audit and reporting.
+      </Step>
+    </Steps>
+  </Tab>
+</Tabs>
+
+## Data fields
+
+<AccordionGroup>
+  <Accordion title="Income record">
+    | Field | Description |
+    |-------|-------------|
+    | `date` | Date of the income |
+    | `category` | Category label (e.g., `Fee`, `Donation`, `Rental`) |
+    | `description` | Description of the income source |
+    | `amount` | Amount received |
+  </Accordion>
+  <Accordion title="Expense record">
+    | Field | Description |
+    |-------|-------------|
+    | `date` | Date of the expense |
+    | `category` | Category label (e.g., `Salaries`, `Utilities`, `Hostel`, `Inventory`) |
+    | `description` | Description of the expense |
+    | `amount` | Amount spent |
+  </Accordion>
+  <Accordion title="Closing record">
+    | Field | Description |
+    |-------|-------------|
+    | `date` | Closing date |
+    | `type` | Period type (e.g., `daily`, `weekly`, `monthly`) |
+    | `totalIncome` | Total income for the period |
+    | `totalExpense` | Total expense for the period |
+    | `netBalance` | `totalIncome - totalExpense` |
+    | `remarks` | Optional notes |
+  </Accordion>
+</AccordionGroup>
+
+## Automatic expense categories
+
+| Source | Category | Trigger |
+|--------|----------|---------|
+| Paid fee challans | Fee | `status = PAID` on `FeeChallan` |
+| Paid payrolls | Salaries | `status = PAID` on `Payroll` |
+| Hostel expense records | Hostel | Any `HostelExpense` entry |
+| Inventory purchases | Inventory | Any `SchoolInventory` entry (`totalValue`) |
+| Inventory maintenance | Inventory | Any `InventoryExpense` entry |
+
+## Permissions
+
+This module requires the `finance` permission in `admin.permissions.modules`.

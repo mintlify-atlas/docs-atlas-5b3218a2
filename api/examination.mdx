@@ -1,0 +1,283 @@
+---
+title: "Examination API"
+description: "Manage exams, marks, results, and class positions."
+---
+
+<Info>
+  All endpoints require JWT authentication via the `Authorization: Bearer <token>` header or the `access_token` cookie.
+</Info>
+
+## Endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/api/exams/create` | Create an exam |
+| `GET` | `/api/exams/all` | List all exams |
+| `PUT` | `/api/exams/update` | Update an exam |
+| `DELETE` | `/api/exams/delete` | Delete an exam |
+| `POST` | `/api/exams/marks/create` | Enter marks for a student |
+| `POST` | `/api/exams/marks/bulk-create` | Bulk enter marks |
+| `GET` | `/api/exams/marks/all` | List all marks |
+| `PUT` | `/api/exams/marks/update` | Update a marks entry |
+| `DELETE` | `/api/exams/marks/delete` | Delete a marks entry |
+| `POST` | `/api/exams/result/create` | Create a result record |
+| `GET` | `/api/exams/result/all` | List all results |
+| `POST` | `/api/exams/result/generate` | Auto-generate results from marks |
+| `GET` | `/api/exams/result/student` | Get results for a specific student |
+| `PUT` | `/api/exams/result/update` | Update a result record |
+| `DELETE` | `/api/exams/result/delete` | Delete a result |
+| `POST` | `/api/exams/positions/generate` | Auto-generate class positions |
+| `GET` | `/api/exams/positions/all` | List all positions |
+| `PUT` | `/api/exams/positions/update` | Update a position |
+| `DELETE` | `/api/exams/positions/delete` | Delete a position |
+
+---
+
+## Exams
+
+### POST /api/exams/create
+
+Create a new exam. An optional `schedule` array can be provided to define per-subject exam dates in the same request.
+
+<ParamField body="examName" type="string" required>
+  Name of the exam (e.g. `Mid Term 2025`).
+</ParamField>
+
+<ParamField body="programId" type="number" required>
+  Program this exam belongs to.
+</ParamField>
+
+<ParamField body="classId" type="number">
+  Restrict to a specific class.
+</ParamField>
+
+<ParamField body="session" type="string" required>
+  Academic session (e.g. `2024-2025`).
+</ParamField>
+
+<ParamField body="type" type="string" required>
+  Exam type (e.g. `MIDTERM`, `FINAL`, `QUIZ`).
+</ParamField>
+
+<ParamField body="startDate" type="string" required>
+  Exam start date (ISO date string).
+</ParamField>
+
+<ParamField body="endDate" type="string" required>
+  Exam end date (ISO date string).
+</ParamField>
+
+<ParamField body="description" type="string">
+  Optional description.
+</ParamField>
+
+<ParamField body="schedule" type="array">
+  Optional list of subject schedules.
+  <Expandable title="schedule item">
+    <ParamField body="subjectId" type="number" required>
+      Subject ID.
+    </ParamField>
+    <ParamField body="date" type="string" required>
+      Date of this subject's paper.
+    </ParamField>
+    <ParamField body="startTime" type="string" required>
+      Start time.
+    </ParamField>
+    <ParamField body="endTime" type="string" required>
+      End time.
+    </ParamField>
+    <ParamField body="totalMarks" type="number" required>
+      Total marks for this paper.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+```bash
+curl -X POST http://localhost:3003/api/exams/create \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "examName": "Mid Term 2025",
+    "programId": 2,
+    "session": "2024-2025",
+    "type": "MIDTERM",
+    "startDate": "2025-04-01",
+    "endDate": "2025-04-10"
+  }'
+```
+
+### GET /api/exams/all
+
+Return all exams.
+
+### PUT /api/exams/update
+
+<ParamField query="id" type="number" required>
+  Exam ID.
+</ParamField>
+
+Accepts the same fields as the create endpoint, all optional.
+
+### DELETE /api/exams/delete
+
+<ParamField query="id" type="number" required>
+  Exam ID.
+</ParamField>
+
+---
+
+## Marks
+
+### POST /api/exams/marks/create
+
+Enter marks for a single student in a single subject.
+
+<ParamField body="examId" type="string" required>
+  Exam ID.
+</ParamField>
+
+<ParamField body="studentId" type="string" required>
+  Student ID.
+</ParamField>
+
+<ParamField body="subject" type="string" required>
+  Subject name or ID.
+</ParamField>
+
+<ParamField body="totalMarks" type="number" required>
+  Total marks for the subject.
+</ParamField>
+
+<ParamField body="obtainedMarks" type="number" required>
+  Marks obtained by the student.
+</ParamField>
+
+<ParamField body="teacherRemarks" type="string">
+  Optional teacher remarks.
+</ParamField>
+
+<ParamField body="isAbsent" type="boolean">
+  Mark the student as absent for this subject.
+</ParamField>
+
+```bash
+curl -X POST http://localhost:3003/api/exams/marks/create \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"examId": "5", "studentId": "101", "subject": "Data Structures", "totalMarks": 100, "obtainedMarks": 85}'
+```
+
+### POST /api/exams/marks/bulk-create
+
+Enter marks for multiple students in a single request.
+
+<ParamField body="marks" type="array" required>
+  Array of marks objects. Each object has the same fields as the single create endpoint.
+</ParamField>
+
+```bash
+curl -X POST http://localhost:3003/api/exams/marks/bulk-create \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "marks": [
+      {"examId": "5", "studentId": "101", "subject": "Data Structures", "totalMarks": 100, "obtainedMarks": 85},
+      {"examId": "5", "studentId": "102", "subject": "Data Structures", "totalMarks": 100, "obtainedMarks": 72}
+    ]
+  }'
+```
+
+### GET /api/exams/marks/all
+
+<ParamField query="examId" type="number">
+  Filter by exam ID.
+</ParamField>
+
+<ParamField query="sectionId" type="number">
+  Filter by section ID.
+</ParamField>
+
+### PUT /api/exams/marks/update
+
+<ParamField query="id" type="string" required>
+  Marks record ID.
+</ParamField>
+
+### DELETE /api/exams/marks/delete
+
+<ParamField query="id" type="string" required>
+  Marks record ID.
+</ParamField>
+
+---
+
+## Results
+
+### POST /api/exams/result/generate
+
+Auto-generate result records from entered marks for an exam.
+
+<ParamField query="examId" type="number" required>
+  Exam ID.
+</ParamField>
+
+<ParamField query="classId" type="number">
+  Restrict generation to a specific class.
+</ParamField>
+
+```bash
+curl -X POST "http://localhost:3003/api/exams/result/generate?examId=5" \
+  -H "Authorization: Bearer <access_token>"
+```
+
+### GET /api/exams/result/all
+
+Return all result records.
+
+### GET /api/exams/result/student
+
+Return results for a specific student in a specific exam.
+
+<ParamField query="studentId" type="number" required>
+  Student ID.
+</ParamField>
+
+<ParamField query="examId" type="number" required>
+  Exam ID.
+</ParamField>
+
+```bash
+curl "http://localhost:3003/api/exams/result/student?studentId=101&examId=5" \
+  -H "Authorization: Bearer <access_token>"
+```
+
+---
+
+## Positions
+
+### POST /api/exams/positions/generate
+
+Auto-generate class ranking/positions from result records.
+
+<ParamField query="examId" type="number" required>
+  Exam ID.
+</ParamField>
+
+<ParamField query="classId" type="number">
+  Restrict to a specific class.
+</ParamField>
+
+```bash
+curl -X POST "http://localhost:3003/api/exams/positions/generate?examId=5&classId=3" \
+  -H "Authorization: Bearer <access_token>"
+```
+
+### GET /api/exams/positions/all
+
+<ParamField query="examId" type="number">
+  Filter by exam ID.
+</ParamField>
+
+<ParamField query="classId" type="number">
+  Filter by class ID.
+</ParamField>

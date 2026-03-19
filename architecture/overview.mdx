@@ -1,0 +1,97 @@
+---
+title: "Architecture overview"
+description: "How the backend, frontend, and database fit together in Concordia PSH."
+---
+
+Concordia PSH is a three-tier web application. The React single-page application communicates exclusively with the NestJS REST API, which in turn reads and writes data through Prisma ORM to a MySQL 8.0 database.
+
+## System diagram
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                        Browser                              │
+│                                                             │
+│   React SPA (Vite)          port 5173                       │
+│   ┌─────────────────────────────────────────────────────┐  │
+│   │  React Router  │  TanStack Query  │  shadcn/ui      │  │
+│   └──────────────────────┬──────────────────────────────┘  │
+└──────────────────────────┼──────────────────────────────────┘
+                           │  HTTP + cookies (JWT)
+┌──────────────────────────▼──────────────────────────────────┐
+│                NestJS REST API          port 3003            │
+│                                                             │
+│   Global prefix: /api                                       │
+│   ┌───────────┐  ┌────────────┐  ┌──────────────────────┐  │
+│   │ AuthModule│  │ Feature    │  │  ValidationPipe      │  │
+│   │ (JWT)     │  │ Modules    │  │  CORS middleware      │  │
+│   └───────────┘  └────────────┘  └──────────────────────┘  │
+│                        │                                    │
+│                   Prisma ORM                                │
+└────────────────────────┼────────────────────────────────────┘
+                         │
+┌────────────────────────▼────────────────────────────────────┐
+│              MySQL 8.0 database  (internal)                 │
+│                                                             │
+│   Named volume: mysql_data                                  │
+└─────────────────────────────────────────────────────────────┘
+
+                              ┌─────────────┐
+                              │  Cloudinary │
+                              │  (photos,   │
+                              │  documents) │
+                              └─────────────┘
+                              ↑
+              Backend uploads files directly to Cloudinary
+```
+
+## Three-tier architecture
+
+**Presentation tier — React SPA**
+The admin panel is a React 18 application built with Vite. It runs entirely in the browser and communicates with the backend through a JSON REST API. React Router handles client-side navigation, TanStack Query manages server state and caching, and shadcn/ui provides the component library.
+
+**Application tier — NestJS API**
+The backend is a NestJS 11 application written in TypeScript. All routes are prefixed with `/api`. The application is organized into feature modules that map directly to the institution's functional areas (students, staff, attendance, fee management, etc.). A global `ValidationPipe` validates and transforms all incoming request bodies.
+
+**Data tier — MySQL 8.0**
+The database is a MySQL 8.0 instance managed through Prisma ORM. The schema is defined in `backend/prisma/schema.prisma`. The database container is internal to the Docker network and is not exposed on the host.
+
+## Authentication flow
+
+Concordia PSH uses a dual-token JWT strategy:
+
+1. **Login** — The client posts credentials to `/api/auth/login`. On success, the server sets two HTTP-only cookies: an access token (short-lived) and a refresh token (long-lived).
+2. **Authenticated requests** — The browser automatically sends the access token cookie with every request. The NestJS JWT guard validates the token on protected routes.
+3. **Token refresh** — When the frontend receives a `401` response, it calls `/api/auth/refresh` with the refresh token cookie. The server issues a new access token and returns it as a cookie. The original request is then retried.
+4. **Logout** — The server clears both cookies.
+
+The `cookie-parser` middleware enables the server to read cookies from incoming requests.
+
+## Cloudinary integration
+
+Staff photos, student photos, and document uploads are stored in Cloudinary. The backend uses `multer-storage-cloudinary` to stream file uploads directly from the incoming multipart request to Cloudinary. The resulting `photo_url` and `photo_public_id` fields are stored in the database for later retrieval and deletion.
+
+## CORS configuration
+
+The backend allows cross-origin requests from two origins:
+
+- `http://localhost:5173` — always allowed for local development.
+- The value of the `ALLOWED_IP` environment variable — set this to your production admin panel URL.
+
+Credentials (cookies) are included in CORS-allowed requests.
+
+## Sub-pages
+
+<CardGroup cols={2}>
+  <Card title="Backend architecture" icon="server" href="/architecture/backend">
+    NestJS module structure, middleware, API design, and JWT strategy.
+  </Card>
+  <Card title="Frontend architecture" icon="browser" href="/architecture/frontend">
+    React admin panel structure, routing, permission guards, and data fetching.
+  </Card>
+  <Card title="Database schema" icon="database" href="/architecture/database">
+    Prisma models, relationships, and enums.
+  </Card>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Get the application running locally in under 5 minutes.
+  </Card>
+</CardGroup>

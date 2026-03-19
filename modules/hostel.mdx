@@ -1,0 +1,134 @@
+---
+title: "Hostel"
+description: "Manage hostel registrations, room allocation, expenses, and hostel inventory."
+---
+
+## Overview
+
+The Hostel module manages residential accommodation for students and external residents. Admins register residents, manage room stock, allocate residents to specific rooms, track hostel expenses, and maintain an inventory of hostel assets. Room occupancy is tracked automatically when allocations are created or removed.
+
+## Key features
+
+<CardGroup cols={2}>
+  <Card title="Resident registration" icon="house-user">
+    Register institute students or external residents (with name, institute, and guardian details) in a hostel. A student can only have one active hostel registration.
+  </Card>
+  <Card title="Room management" icon="door-closed">
+    Create and maintain room records with room number, type (single, double, triple), capacity, hostel name, and status (vacant, occupied, maintenance).
+  </Card>
+  <Card title="Room allocation" icon="bed">
+    Assign a registered resident to a specific room. The system enforces capacity limits and prevents double-allocation. Room occupancy count updates automatically.
+  </Card>
+  <Card title="Expense tracking" icon="receipt">
+    Log hostel expenses with a title, amount, date, and remarks. These expenses flow into the Finance module as Hostel category expenses.
+  </Card>
+  <Card title="Hostel inventory" icon="couch">
+    Track hostel assets such as furniture, electronics, and bedding. Record item name, category, quantity, condition, and room assignment.
+  </Card>
+  <Card title="Deallocation" icon="door-open">
+    Remove a resident from their allocated room. The room occupancy count decreases and the room status reverts to vacant.
+  </Card>
+</CardGroup>
+
+## Workflows
+
+<Tabs>
+  <Tab title="Register a resident">
+    <Steps>
+      <Step title="Choose resident type">
+        Select whether the resident is an existing institute student (link by student ID) or an external resident.
+      </Step>
+      <Step title="Fill in details">
+        For students, select the student ID. For external residents, enter name, institute, guardian name, and guardian contact number.
+      </Step>
+      <Step title="Set hostel and registration date">
+        Enter the hostel name and registration date. Status defaults to `active`.
+      </Step>
+      <Step title="Submit">
+        If the student is already registered in the hostel, the request is rejected with a conflict error.
+      </Step>
+    </Steps>
+  </Tab>
+  <Tab title="Manage rooms">
+    <Steps>
+      <Step title="Create a room">
+        Enter room number (unique), room type (single/double/triple), capacity, hostel name, and initial status.
+      </Step>
+      <Step title="Update room status">
+        Change status to `maintenance` for rooms under repair, or `vacant` when a room is ready. `occupied` is set automatically when capacity is reached.
+      </Step>
+    </Steps>
+  </Tab>
+  <Tab title="Allocate a room">
+    <Steps>
+      <Step title="Select room and resident">
+        Choose the target room and the resident (student ID or external name). The system checks that the room is not at full capacity and the student is not already allocated.
+      </Step>
+      <Step title="Set allocation date">
+        Enter the date the resident moved into the room.
+      </Step>
+      <Step title="Submit">
+        The allocation is created and the room's `currentOccupancy` increments by 1. If capacity is reached, the room status changes to `occupied`.
+      </Step>
+      <Step title="Deallocate when resident leaves">
+        Delete the allocation record. The room's occupancy decrements and status reverts to `vacant`.
+      </Step>
+    </Steps>
+  </Tab>
+</Tabs>
+
+## Data fields
+
+<AccordionGroup>
+  <Accordion title="Hostel registration">
+    | Field | Description |
+    |-------|-------------|
+    | `studentId` | Linked student ID (for institute students) |
+    | `externalName` | Name of external resident |
+    | `externalInstitute` | External resident's institution |
+    | `externalGuardianName` | Guardian name for external resident |
+    | `externalGuardianNumber` | Guardian contact number |
+    | `hostelName` | Name of the hostel |
+    | `registrationDate` | Date of registration |
+    | `status` | `active` or `inactive` |
+  </Accordion>
+  <Accordion title="Room">
+    | Field | Description |
+    |-------|-------------|
+    | `roomNumber` | Unique room identifier |
+    | `roomType` | `single`, `double`, or `triple` |
+    | `capacity` | Maximum number of occupants |
+    | `currentOccupancy` | Current number of allocated residents |
+    | `status` | `vacant`, `occupied`, or `maintenance` |
+    | `hostelName` | Name of the hostel this room belongs to |
+  </Accordion>
+  <Accordion title="Room allocation">
+    | Field | Description |
+    |-------|-------------|
+    | `roomId` | Linked room |
+    | `studentId` | Linked student (for institute students) |
+    | `externalName` | Name for external residents |
+    | `allocationDate` | Move-in date |
+  </Accordion>
+  <Accordion title="Hostel expense">
+    | Field | Description |
+    |-------|-------------|
+    | `expenseTitle` | Title or description of the expense |
+    | `amount` | Expense amount |
+    | `date` | Date of the expense |
+    | `remarks` | Optional notes |
+  </Accordion>
+  <Accordion title="Hostel inventory">
+    | Field | Description |
+    |-------|-------------|
+    | `itemName` | Name of the inventory item |
+    | `category` | `furniture`, `electronics`, `bedding`, or `other` |
+    | `quantity` | Number of items |
+    | `condition` | `new`, `good`, or `repair-needed` |
+    | `allocatedToRoom` | Room number this item is assigned to |
+  </Accordion>
+</AccordionGroup>
+
+## Permissions
+
+This module requires the `hostel` permission in `admin.permissions.modules`.

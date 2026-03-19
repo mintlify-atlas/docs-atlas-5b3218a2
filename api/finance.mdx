@@ -1,0 +1,252 @@
+---
+title: "Finance API"
+description: "Record income and expenses, create financial closings, and view dashboard stats."
+---
+
+<Info>
+  All endpoints require JWT authentication via the `Authorization: Bearer <token>` header or the `access_token` cookie.
+</Info>
+
+## Endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/api/finance/income` | Record income |
+| `GET` | `/api/finance/income` | List income records |
+| `PATCH` | `/api/finance/income/:id` | Update an income record |
+| `DELETE` | `/api/finance/income/:id` | Delete an income record |
+| `POST` | `/api/finance/expense` | Record an expense |
+| `GET` | `/api/finance/expense` | List expense records |
+| `PATCH` | `/api/finance/expense/:id` | Update an expense record |
+| `DELETE` | `/api/finance/expense/:id` | Delete an expense record |
+| `POST` | `/api/finance/closing` | Create a financial closing |
+| `GET` | `/api/finance/closing` | List financial closings |
+| `PATCH` | `/api/finance/closing/:id` | Update a closing |
+| `DELETE` | `/api/finance/closing/:id` | Delete a closing |
+| `GET` | `/api/finance/dashboard-stats` | Get finance dashboard statistics |
+
+---
+
+## Income
+
+### POST /api/finance/income
+
+Record an income transaction.
+
+<ParamField body="date" type="string" required>
+  Transaction date (ISO date string).
+</ParamField>
+
+<ParamField body="category" type="string" required>
+  Income category (e.g. `Fee`, `Donation`, `Grant`).
+</ParamField>
+
+<ParamField body="description" type="string" required>
+  Description of the income.
+</ParamField>
+
+<ParamField body="amount" type="number" required>
+  Income amount.
+</ParamField>
+
+```bash
+curl -X POST http://localhost:3003/api/finance/income \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"date": "2025-03-15", "category": "Fee", "description": "Admission fees collected", "amount": 250000}'
+```
+
+### GET /api/finance/income
+
+Return income records, optionally filtered by date range and category.
+
+<ParamField query="dateFrom" type="string">
+  Start date filter (ISO date string).
+</ParamField>
+
+<ParamField query="dateTo" type="string">
+  End date filter (ISO date string).
+</ParamField>
+
+<ParamField query="category" type="string">
+  Filter by income category.
+</ParamField>
+
+```bash
+curl "http://localhost:3003/api/finance/income?dateFrom=2025-03-01&dateTo=2025-03-31" \
+  -H "Authorization: Bearer <access_token>"
+```
+
+### PATCH /api/finance/income/:id
+
+Update an income record.
+
+<ParamField path="id" type="number" required>
+  Income record ID.
+</ParamField>
+
+Accepts any subset of the create fields.
+
+### DELETE /api/finance/income/:id
+
+<ParamField path="id" type="number" required>
+  Income record ID.
+</ParamField>
+
+---
+
+## Expenses
+
+### POST /api/finance/expense
+
+Record an expenditure.
+
+<ParamField body="date" type="string" required>
+  Transaction date (ISO date string).
+</ParamField>
+
+<ParamField body="category" type="string" required>
+  Expense category (e.g. `Utilities`, `Salaries`, `Maintenance`).
+</ParamField>
+
+<ParamField body="description" type="string" required>
+  Description of the expense.
+</ParamField>
+
+<ParamField body="amount" type="number" required>
+  Expense amount.
+</ParamField>
+
+```bash
+curl -X POST http://localhost:3003/api/finance/expense \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"date": "2025-03-15", "category": "Utilities", "description": "Electricity bill", "amount": 35000}'
+```
+
+### GET /api/finance/expense
+
+<ParamField query="dateFrom" type="string">
+  Start date filter.
+</ParamField>
+
+<ParamField query="dateTo" type="string">
+  End date filter.
+</ParamField>
+
+<ParamField query="category" type="string">
+  Filter by category.
+</ParamField>
+
+### PATCH /api/finance/expense/:id
+
+<ParamField path="id" type="number" required>
+  Expense record ID.
+</ParamField>
+
+### DELETE /api/finance/expense/:id
+
+<ParamField path="id" type="number" required>
+  Expense record ID.
+</ParamField>
+
+---
+
+## Financial closing
+
+A closing is a period-end reconciliation record that summarises total income, expenses, and net balance for a given period.
+
+### POST /api/finance/closing
+
+<ParamField body="date" type="string" required>
+  Closing date (ISO date string).
+</ParamField>
+
+<ParamField body="type" type="string" required>
+  Closing period type (e.g. `MONTHLY`, `YEARLY`).
+</ParamField>
+
+<ParamField body="totalIncome" type="number" required>
+  Total income for the period.
+</ParamField>
+
+<ParamField body="totalExpense" type="number" required>
+  Total expenses for the period.
+</ParamField>
+
+<ParamField body="netBalance" type="number" required>
+  Net balance (`totalIncome - totalExpense`).
+</ParamField>
+
+<ParamField body="remarks" type="string">
+  Optional remarks.
+</ParamField>
+
+```bash
+curl -X POST http://localhost:3003/api/finance/closing \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "date": "2025-03-31",
+    "type": "MONTHLY",
+    "totalIncome": 500000,
+    "totalExpense": 320000,
+    "netBalance": 180000,
+    "remarks": "March 2025 closing"
+  }'
+```
+
+### GET /api/finance/closing
+
+<ParamField query="dateFrom" type="string">
+  Start date filter.
+</ParamField>
+
+<ParamField query="dateTo" type="string">
+  End date filter.
+</ParamField>
+
+### PATCH /api/finance/closing/:id
+
+<ParamField path="id" type="number" required>
+  Closing record ID.
+</ParamField>
+
+### DELETE /api/finance/closing/:id
+
+<ParamField path="id" type="number" required>
+  Closing record ID.
+</ParamField>
+
+---
+
+## Dashboard statistics
+
+### GET /api/finance/dashboard-stats
+
+Return aggregated financial statistics for the dashboard.
+
+<ParamField query="dateFrom" type="string">
+  Start date filter (ISO date string).
+</ParamField>
+
+<ParamField query="dateTo" type="string">
+  End date filter (ISO date string).
+</ParamField>
+
+<ResponseField name="totalIncome" type="number">
+  Total income in the period.
+</ResponseField>
+
+<ResponseField name="totalExpense" type="number">
+  Total expenses in the period.
+</ResponseField>
+
+<ResponseField name="netBalance" type="number">
+  Net balance in the period.
+</ResponseField>
+
+```bash
+curl "http://localhost:3003/api/finance/dashboard-stats?dateFrom=2025-01-01&dateTo=2025-03-31" \
+  -H "Authorization: Bearer <access_token>"
+```

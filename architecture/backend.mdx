@@ -1,0 +1,148 @@
+---
+title: "Backend architecture"
+description: "NestJS module structure, middleware, and API design for the Concordia PSH backend."
+---
+
+The backend is a NestJS 11 application written in TypeScript. It exposes a REST API under the `/api` global prefix, uses Prisma ORM for database access, and stores file uploads in Cloudinary.
+
+## Bootstrap
+
+The application entry point is `backend/src/main.ts`:
+
+```typescript backend/src/main.ts
+import { NestFactory } from '@nestjs/core';
+import { AppModule } from './app.module';
+import { ValidationPipe } from '@nestjs/common';
+import cookieParser from 'cookie-parser';
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+  (BigInt.prototype as any).toJSON = function () {
+    return this.toString();
+  };
+  app.use(cookieParser());
+  app.setGlobalPrefix('api');
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
+  app.enableCors({
+    origin: ['http://localhost:5173', process.env.ALLOWED_IP],
+    credentials: true,
+  });
+  await app.listen(process.env.PORT!);
+}
+bootstrap();
+```
+
+## Middleware
+
+**`cookie-parser`** — Parses the `Cookie` header on every incoming request, making cookies available as `req.cookies`. This is required for the JWT refresh token strategy, which reads tokens from HTTP-only cookies.
+
+**`BigInt.toJSON` patch** — MySQL `BIGINT` columns (e.g., `Visitor.phone`, `Visitor.IDCard`) are returned as JavaScript `BigInt` values by Prisma. This patch serializes them to strings so they can be included in JSON responses without throwing a `TypeError`.
+
+## Global prefix
+
+All routes are registered under the `/api` prefix. For example, the auth endpoint is `/api/auth/login`, and the student list endpoint is `/api/student`.
+
+## Validation
+
+A global `ValidationPipe` is applied with three options:
+
+| Option | Value | Effect |
+|---|---|---|
+| `whitelist` | `true` | Strips any properties from the request body that are not declared in the DTO class. |
+| `forbidNonWhitelisted` | `true` | Throws a `400 Bad Request` error if the request body contains undeclared properties (instead of silently stripping them). |
+| `transform` | `true` | Automatically transforms request body and query parameters to the types declared in the DTO (e.g., string `"1"` becomes number `1`). |
+
+## CORS
+
+Cross-origin requests are allowed from:
+
+- `http://localhost:5173` — hardcoded for local development.
+- `process.env.ALLOWED_IP` — set via the `ALLOWED_IP` environment variable for production deployments.
+
+The `credentials: true` option is required to allow the browser to send and receive HTTP-only cookies across origins.
+
+## JWT authentication
+
+The `AuthModule` implements a dual-token strategy using `@nestjs/jwt` and `passport-jwt`:
+
+- **Access token** — Short-lived JWT signed with `JWT_ACCESS_SECRET`. Sent as an HTTP-only cookie on login and refreshed automatically.
+- **Refresh token** — Long-lived JWT signed with `JWT_REFRESH_SECRET`. Used by the `/api/auth/refresh` endpoint to issue a new access token without requiring the user to log in again.
+
+Protected routes use the `JwtAuthGuard` (passport `jwt` strategy). The frontend automatically calls the refresh endpoint when it receives a `401` response.
+
+## Module structure
+
+All feature modules are registered in `AppModule`:
+
+```typescript backend/src/app.module.ts
+@Module({
+  imports: [
+    AuthModule,
+    PrismaModule,
+    ConfigModule.forRoot({ isGlobal: true }),
+    AdminModule,
+    DepartmentModule,
+    TeacherModule,
+    AcademicsModule,
+    StudentModule,
+    CloudinaryModule,
+    AttendanceModule,
+    HrModule,
+    FrontOfficeModule,
+    ExaminationModule,
+    ConfigurationModule,
+    HostelModule,
+    InventoryModule,
+    FeeManagementModule,
+    FinanceModule,
+    DashboardModule,
+  ],
+})
+export class AppModule {}
+```
+
+### Module descriptions
+
+| Module | Path | Responsibility |
+|---|---|---|
+| `AuthModule` | `src/auth` | Login, logout, token refresh, JWT guards |
+| `PrismaModule` | `src/prisma` | Shared Prisma client, injected across all modules |
+| `AdminModule` | `src/admin` | Admin user management, permission assignment |
+| `DepartmentModule` | `src/department` | Academic departments and department heads |
+| `TeacherModule` | `src/teacher` | Teaching staff records and subject mappings |
+| `AcademicsModule` | `src/academics` | Programs, classes, sections, subjects, timetables, assignments |
+| `StudentModule` | `src/student` | Student enrollment, profiles, status management |
+| `CloudinaryModule` | `src/cloudinary` | File upload service (photos, documents) |
+| `AttendanceModule` | `src/attendance` | Student and staff attendance, leaves, holidays |
+| `HrModule` | `src/hr` | HR & payroll: payroll processing, advance salaries, staff leaves |
+| `FrontOfficeModule` | `src/front-office` | Inquiries, visitors, complaints, contacts |
+| `ExaminationModule` | `src/examination` | Exams, schedules, marks, results, positions, report cards |
+| `ConfigurationModule` | `src/configuration` | Institute settings, fee challan templates, ID card templates |
+| `HostelModule` | `src/hostel` | Hostel registrations, rooms, allocations, expenses, inventory |
+| `InventoryModule` | `src/inventory` | School-wide inventory items and maintenance expenses |
+| `FeeManagementModule` | `src/fee-management` | Fee heads, structures, challans, installments, arrears |
+| `FinanceModule` | `src/finance` | Income, expense, and closing entries |
+| `DashboardModule` | `src/dashboard` | Aggregated statistics for the dashboard view |
+
+## Key dependencies
+
+| Package | Version | Purpose |
+|---|---|---|
+| `@nestjs/core` | `^11.0.1` | NestJS framework |
+| `@nestjs/jwt` | `^11.0.1` | JWT token generation and validation |
+| `@nestjs/passport` | `^11.0.5` | Passport.js integration for guards |
+| `@prisma/client` | `^6.19.0` | Prisma database client |
+| `prisma` | `^6.19.0` | Prisma CLI for migrations and code generation |
+| `cloudinary` | `^1.41.3` | Cloudinary SDK for file uploads |
+| `multer-storage-cloudinary` | `^4.0.0` | Multer storage engine for direct Cloudinary uploads |
+| `bcrypt` | `^6.0.0` | Password hashing |
+| `cookie-parser` | `^1.4.7` | Cookie parsing middleware |
+| `class-validator` | `^0.14.2` | DTO validation decorators |
+| `class-transformer` | `^0.5.1` | DTO transformation (used by `ValidationPipe`) |
+| `node-cron` | `^4.2.1` | Scheduled tasks (e.g., auto-generating attendance records) |

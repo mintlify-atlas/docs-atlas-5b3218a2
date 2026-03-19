@@ -1,0 +1,314 @@
+---
+title: "Fee Management API"
+description: "Manage fee heads, fee structures, challans, arrears, and installment plans."
+---
+
+<Info>
+  All endpoints require JWT authentication via the `Authorization: Bearer <token>` header or the `access_token` cookie.
+</Info>
+
+## Endpoints overview
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/api/fee-management/head/create` | Create fee head |
+| `GET` | `/api/fee-management/head/get/all` | List fee heads |
+| `PATCH` | `/api/fee-management/head/update` | Update fee head |
+| `DELETE` | `/api/fee-management/head/delete` | Delete fee head |
+| `POST` | `/api/fee-management/structure/create` | Create fee structure |
+| `GET` | `/api/fee-management/structure/get/all` | List fee structures |
+| `PATCH` | `/api/fee-management/structure/update` | Update fee structure |
+| `DELETE` | `/api/fee-management/structure/delete` | Delete fee structure |
+| `POST` | `/api/fee-management/challan/create` | Create fee challan |
+| `GET` | `/api/fee-management/challan/get/all` | List challans |
+| `GET` | `/api/fee-management/challan/bulk` | Get bulk challans |
+| `PATCH` | `/api/fee-management/challan/update` | Update challan (mark paid, etc.) |
+| `DELETE` | `/api/fee-management/challan/delete` | Delete challan |
+| `GET` | `/api/fee-management/challan/history` | Get challan history for a student |
+| `GET` | `/api/fee-management/student/summary` | Get fee summary for a student |
+| `GET` | `/api/fee-management/student/arrears` | Get arrears for a student |
+| `GET` | `/api/fee-management/installment-plans` | List installment plans |
+| `POST` | `/api/fee-management/challan/generate-from-plan` | Generate challans from a plan |
+| `GET` | `/api/fee-management/reports/revenue-over-time` | Revenue over time report |
+| `GET` | `/api/fee-management/reports/class-collection` | Class collection stats |
+| `GET` | `/api/fee-management/reports/collection-summary` | Fee collection summary |
+
+---
+
+## Fee heads
+
+A fee head represents a single fee component (e.g. tuition, lab fee, library fee).
+
+### POST /api/fee-management/head/create
+
+<ParamField body="name" type="string" required>
+  Fee head name.
+</ParamField>
+
+<ParamField body="amount" type="number" required>
+  Default amount for this fee head.
+</ParamField>
+
+<ParamField body="description" type="string">
+  Optional description.
+</ParamField>
+
+<ParamField body="isTuition" type="boolean">
+  Mark as tuition fee.
+</ParamField>
+
+<ParamField body="isFine" type="boolean">
+  Mark as a fine.
+</ParamField>
+
+<ParamField body="isLabFee" type="boolean">
+  Mark as lab fee.
+</ParamField>
+
+<ParamField body="isLibraryFee" type="boolean">
+  Mark as library fee.
+</ParamField>
+
+<ParamField body="isRegistrationFee" type="boolean">
+  Mark as registration fee.
+</ParamField>
+
+<ParamField body="isAdmissionFee" type="boolean">
+  Mark as admission fee.
+</ParamField>
+
+<ParamField body="isProspectusFee" type="boolean">
+  Mark as prospectus fee.
+</ParamField>
+
+<ParamField body="isExaminationFee" type="boolean">
+  Mark as examination fee.
+</ParamField>
+
+<ParamField body="isAlliedCharges" type="boolean">
+  Mark as allied charges.
+</ParamField>
+
+<ParamField body="isHostelFee" type="boolean">
+  Mark as hostel fee.
+</ParamField>
+
+<ParamField body="isOther" type="boolean">
+  Mark as other.
+</ParamField>
+
+```bash
+curl -X POST http://localhost:3003/api/fee-management/head/create \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Tuition Fee", "amount": 15000, "isTuition": true}'
+```
+
+### GET /api/fee-management/head/get/all
+
+Return all fee heads.
+
+### PATCH /api/fee-management/head/update
+
+<ParamField query="id" type="number" required>
+  Fee head ID.
+</ParamField>
+
+### DELETE /api/fee-management/head/delete
+
+<ParamField query="id" type="number" required>
+  Fee head ID.
+</ParamField>
+
+---
+
+## Fee structures
+
+A fee structure defines the total fee for a specific program/class combination and optionally references fee heads.
+
+### POST /api/fee-management/structure/create
+
+<ParamField body="programId" type="number" required>
+  Program ID.
+</ParamField>
+
+<ParamField body="classId" type="number" required>
+  Class ID.
+</ParamField>
+
+<ParamField body="totalAmount" type="number" required>
+  Total fee amount.
+</ParamField>
+
+<ParamField body="feeHeads" type="number[]">
+  Array of fee head IDs to include.
+</ParamField>
+
+<ParamField body="installments" type="number">
+  Number of installments.
+</ParamField>
+
+```bash
+curl -X POST http://localhost:3003/api/fee-management/structure/create \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"programId": 2, "classId": 3, "totalAmount": 50000, "feeHeads": [1, 2], "installments": 2}'
+```
+
+### GET /api/fee-management/structure/get/all
+
+Return all fee structures.
+
+### PATCH /api/fee-management/structure/update
+
+<ParamField query="id" type="number" required>
+  Fee structure ID.
+</ParamField>
+
+### DELETE /api/fee-management/structure/delete
+
+<ParamField query="id" type="number" required>
+  Fee structure ID.
+</ParamField>
+
+---
+
+## Fee challans
+
+A challan is a payable fee voucher issued to a student.
+
+### POST /api/fee-management/challan/create
+
+<ParamField body="studentId" type="number" required>
+  Student ID.
+</ParamField>
+
+<ParamField body="amount" type="number" required>
+  Challan amount.
+</ParamField>
+
+<ParamField body="dueDate" type="string" required>
+  Due date (ISO date string).
+</ParamField>
+
+<ParamField body="feeStructureId" type="number">
+  Optional fee structure reference.
+</ParamField>
+
+<ParamField body="fineAmount" type="number">
+  Late fee fine amount.
+</ParamField>
+
+<ParamField body="remarks" type="string">
+  Optional remarks.
+</ParamField>
+
+<ParamField body="installmentNumber" type="number">
+  Installment number (for instalment-based challans).
+</ParamField>
+
+<ParamField body="selectedHeads" type="array">
+  Snapshot of fee head objects included in this challan.
+</ParamField>
+
+<ParamField body="isArrearsPayment" type="boolean">
+  Set to `true` for arrears challans.
+</ParamField>
+
+<ParamField body="paidAmount" type="number">
+  Amount already paid (for partial payment tracking).
+</ParamField>
+
+```bash
+curl -X POST http://localhost:3003/api/fee-management/challan/create \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"studentId": 42, "amount": 15000, "dueDate": "2025-04-30"}'
+```
+
+### GET /api/fee-management/challan/get/all
+
+Return challans with optional filters (passed as query params).
+
+### PATCH /api/fee-management/challan/update
+
+Update a challan, for example to mark it as paid.
+
+<ParamField query="id" type="number" required>
+  Challan ID.
+</ParamField>
+
+Accepts the same fields as the create endpoint, all optional.
+
+```bash
+curl -X PATCH "http://localhost:3003/api/fee-management/challan/update?id=100" \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"paidAmount": 15000, "remarks": "Paid in full"}'
+```
+
+### DELETE /api/fee-management/challan/delete
+
+<ParamField query="id" type="number" required>
+  Challan ID.
+</ParamField>
+
+### GET /api/fee-management/challan/history
+
+Return all challans for a student.
+
+<ParamField query="studentId" type="number" required>
+  Student ID.
+</ParamField>
+
+---
+
+## Student fee summaries
+
+### GET /api/fee-management/student/summary
+
+Return a complete fee summary for a student (total, paid, outstanding).
+
+<ParamField query="studentId" type="number" required>
+  Student ID.
+</ParamField>
+
+### GET /api/fee-management/student/arrears
+
+Return outstanding arrears for a student.
+
+<ParamField query="studentId" type="number" required>
+  Student ID.
+</ParamField>
+
+```bash
+curl "http://localhost:3003/api/fee-management/student/summary?studentId=42" \
+  -H "Authorization: Bearer <access_token>"
+```
+
+---
+
+## Reports
+
+### GET /api/fee-management/reports/revenue-over-time
+
+<ParamField query="period" type="string">
+  Time period filter (e.g. `monthly`, `yearly`).
+</ParamField>
+
+### GET /api/fee-management/reports/class-collection
+
+<ParamField query="period" type="string">
+  Time period filter.
+</ParamField>
+
+### GET /api/fee-management/reports/collection-summary
+
+<ParamField query="period" type="string">
+  Time period filter.
+</ParamField>
+
+```bash
+curl "http://localhost:3003/api/fee-management/reports/collection-summary?period=monthly" \
+  -H "Authorization: Bearer <access_token>"
+```

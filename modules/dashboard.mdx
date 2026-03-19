@@ -1,0 +1,99 @@
+---
+title: "Dashboard"
+description: "Real-time overview of institution-wide metrics for administrators."
+---
+
+## Overview
+
+The Dashboard is the first screen administrators see after logging in. It aggregates live data from across all modules—students, fees, attendance, staff, exams, hostel, inventory, and finance—into a single view. Admins can filter all statistics by a specific month or year to compare performance across periods.
+
+<Info>
+  The dashboard displays current-month data by default. Use the month and year filters at the top of the page to change the reporting period.
+</Info>
+
+## Key features
+
+<CardGroup cols={2}>
+  <Card title="Student statistics" icon="users">
+    Total and active student counts broken down by program level: Intermediate, Diploma, BS (Undergraduate), Short Course, and Coaching.
+  </Card>
+  <Card title="Fee collection metrics" icon="circle-dollar-sign">
+    Total fees issued, amount collected, amount pending, and a tuition collection rate percentage for the selected period.
+  </Card>
+  <Card title="Attendance overview" icon="calendar-check">
+    Present, absent, and on-leave counts for the period. A 7-day weekly attendance trend chart shows daily rates.
+  </Card>
+  <Card title="Staff summary" icon="user-tie">
+    Total staff headcount split into teaching, admin, and support staff categories.
+  </Card>
+  <Card title="Finance balance" icon="chart-line">
+    Monthly income vs. expense totals with net balance. Also shows total receivables outstanding across all sessions.
+  </Card>
+  <Card title="Hostel occupancy" icon="building">
+    Total rooms, occupied rooms, vacant rooms, and occupancy rate percentage.
+  </Card>
+  <Card title="Inventory value" icon="boxes-stacked">
+    Total item count, total asset value, and stock status breakdown (in stock, low stock, out of stock).
+  </Card>
+  <Card title="Exam records" icon="file-pen">
+    Total exams created, broken down by program level.
+  </Card>
+</CardGroup>
+
+## Workflows
+
+<Steps>
+  <Step title="View current period statistics">
+    Open the Dashboard. All metric cards display data for the current month by default.
+  </Step>
+  <Step title="Filter by period">
+    Select a year and optionally a month from the filter controls. All cards and charts update immediately to reflect the selected period.
+  </Step>
+  <Step title="Review fee collection trend">
+    Scroll to the fee collection chart. It shows the last 12 months of collected vs. pending fees, ending at the selected period.
+  </Step>
+  <Step title="Review weekly attendance trend">
+    The weekly attendance chart shows a 7-day attendance rate trend, with each bar representing one day.
+  </Step>
+</Steps>
+
+## Data displayed
+
+<AccordionGroup>
+  <Accordion title="Student metrics">
+    | Field | Description |
+    |-------|-------------|
+    | Total students | All students ever enrolled |
+    | Active students | Students with `passedOut = false` |
+    | By program level | Count per level: INTERMEDIATE, DIPLOMA, UNDERGRADUATE, SHORT_COURSE, COACHING |
+    | Passed out | Students marked as graduated or passed out |
+  </Accordion>
+  <Accordion title="Fee metrics">
+    | Field | Description |
+    |-------|-------------|
+    | Total amount | Sum of all challan amounts issued in the period |
+    | Paid amount | Sum of `paidAmount` on all challans in the period |
+    | Pending amount | Total amount minus paid amount |
+    | Collection rate | `(collectedTuition / expectedTuition) × 100`, capped at 100% |
+    | Total receivables | All-time sum of outstanding balances on PENDING, PARTIAL, and OVERDUE challans |
+  </Accordion>
+  <Accordion title="Attendance metrics">
+    | Field | Description |
+    |-------|-------------|
+    | Present | Attendance records with status PRESENT |
+    | Absent | Attendance records with status ABSENT |
+    | Leave | Attendance records with status LEAVE |
+    | Daily rate | `(present / total) × 100` per day |
+  </Accordion>
+  <Accordion title="Finance metrics">
+    | Field | Description |
+    |-------|-------------|
+    | Monthly income | Total income entries for the period (including paid fee challans) |
+    | Monthly expense | Total expense entries for the period (including paid payrolls) |
+    | Net balance | Monthly income minus monthly expense |
+  </Accordion>
+</AccordionGroup>
+
+## Permissions
+
+The Dashboard is accessible to all authenticated admin accounts. No specific module permission is required beyond a valid login session.

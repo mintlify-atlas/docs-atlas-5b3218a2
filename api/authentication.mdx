@@ -1,0 +1,223 @@
+---
+title: "Authentication API"
+description: "JWT-based authentication with access and refresh tokens for Concordia PSH."
+---
+
+## Overview
+
+Concordia PSH uses JWT (JSON Web Token) authentication. Successful login returns an `access_token` (valid for 24 hours) and a `refresh_token` (valid for 7 days). For web clients, both tokens are stored as HTTP-only cookies. Mobile clients receive tokens directly in the response body.
+
+### Authentication flow
+
+<Steps>
+  <Step title="Login">
+    Send `POST /api/auth/login` with email and password. The server sets `access_token` and `refresh_token` cookies and returns user info.
+  </Step>
+  <Step title="Authenticated requests">
+    Include the access token on every request. For cookie-based clients this happens automatically. For header-based auth, send `Authorization: Bearer <access_token>`.
+  </Step>
+  <Step title="Token refresh">
+    When the access token expires, call `POST /api/auth/refresh-tokens`. The server issues new tokens. The request must carry the `refresh_token` cookie or header.
+  </Step>
+  <Step title="Logout">
+    Call `POST /api/auth/logout` to clear both cookies server-side.
+  </Step>
+</Steps>
+
+<Note>
+  The server reads the `ALLOWED_IP` environment variable for CORS and IP-based access control. Ensure your client origin or IP is allowlisted in production.
+</Note>
+
+---
+
+## Endpoints
+
+### POST /api/auth/login
+
+Authenticate with email and password. Returns user info and sets `access_token` and `refresh_token` as HTTP-only cookies.
+
+**Request body**
+
+<ParamField body="email" type="string" required>
+  The user's email address.
+</ParamField>
+
+<ParamField body="password" type="string" required>
+  The user's password.
+</ParamField>
+
+**Response**
+
+<ResponseField name="message" type="string">
+  `"Login successful"`
+</ResponseField>
+
+<ResponseField name="user" type="object">
+  <Expandable title="properties">
+    <ResponseField name="id" type="string | number">
+      User's unique identifier.
+    </ResponseField>
+    <ResponseField name="name" type="string">
+      User's full name.
+    </ResponseField>
+    <ResponseField name="email" type="string">
+      User's email address.
+    </ResponseField>
+    <ResponseField name="role" type="string">
+      Role: `SUPER_ADMIN`, `ADMIN`, or `Staff`.
+    </ResponseField>
+    <ResponseField name="permissions" type="object">
+      Permission map for the user's role.
+    </ResponseField>
+    <ResponseField name="isStaff" type="boolean">
+      Whether the user is a staff member rather than an admin.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+```bash
+curl -X POST http://localhost:3003/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "admin@school.com", "password": "password123"}'
+```
+
+```json
+{
+  "message": "Login successful",
+  "user": {
+    "id": 1,
+    "name": "Admin User",
+    "email": "admin@school.com",
+    "role": "SUPER_ADMIN",
+    "permissions": {},
+    "isStaff": false
+  }
+}
+```
+
+---
+
+### POST /api/auth/refresh-tokens
+
+Issue new access and refresh tokens using the current refresh token.
+
+For web clients, tokens are returned as cookies. For mobile clients, include the header `client-type: mobile` and tokens are returned in the response body.
+
+<Note>
+  This endpoint requires a valid `refresh_token` cookie (or `Authorization: Bearer <refresh_token>` header for mobile).
+</Note>
+
+**Request headers**
+
+<ParamField header="client-type" type="string">
+  Set to `mobile` to receive tokens in the response body instead of cookies. Defaults to `web`.
+</ParamField>
+
+**Response (web)**
+
+<ResponseField name="message" type="string">
+  `"Login successful"`
+</ResponseField>
+
+**Response (mobile — `client-type: mobile`)**
+
+<ResponseField name="access_token" type="string">
+  New JWT access token.
+</ResponseField>
+
+<ResponseField name="refresh_token" type="string">
+  New JWT refresh token.
+</ResponseField>
+
+```bash
+curl -X POST http://localhost:3003/api/auth/refresh-tokens \
+  -H "Cookie: refresh_token=<your_refresh_token>"
+```
+
+---
+
+### POST /api/auth/logout
+
+Clear the `access_token` and `refresh_token` cookies.
+
+**Response**
+
+<ResponseField name="message" type="string">
+  `"Logout successful"`
+</ResponseField>
+
+```bash
+curl -X POST http://localhost:3003/api/auth/logout \
+  -H "Cookie: access_token=<token>"
+```
+
+---
+
+### GET /api/auth/user-who
+
+Return the currently authenticated user's profile. Requires a valid access token.
+
+**Response**
+
+<ResponseField name="id" type="string | number">
+  User's unique identifier.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  User's full name.
+</ResponseField>
+
+<ResponseField name="email" type="string">
+  User's email address.
+</ResponseField>
+
+<ResponseField name="role" type="string">
+  User's role.
+</ResponseField>
+
+<ResponseField name="permissions" type="object">
+  Permission map.
+</ResponseField>
+
+```bash
+curl http://localhost:3003/api/auth/user-who \
+  -H "Authorization: Bearer <access_token>"
+```
+
+---
+
+### POST /api/auth/create/super-admin
+
+Create the initial super-admin account. Use this endpoint only during first-time setup.
+
+<Warning>
+  This endpoint is unprotected and should only be called once during initial setup. Restrict network access to this route in production.
+</Warning>
+
+**Request body**
+
+<ParamField body="name" type="string" required>
+  Admin's full name.
+</ParamField>
+
+<ParamField body="email" type="string" required>
+  Admin's email address.
+</ParamField>
+
+<ParamField body="password" type="string" required>
+  Admin's password.
+</ParamField>
+
+<ParamField body="role" type="string" required>
+  Must be `SUPER_ADMIN` or `ADMIN`.
+</ParamField>
+
+<ParamField body="permissions" type="object">
+  Optional permission map.
+</ParamField>
+
+```bash
+curl -X POST http://localhost:3003/api/auth/create/super-admin \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Super Admin", "email": "admin@school.com", "password": "securepass", "role": "SUPER_ADMIN"}'
+```

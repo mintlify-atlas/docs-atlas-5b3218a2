@@ -1,0 +1,204 @@
+---
+title: "Hostel API"
+description: "Manage hostel registrations, rooms, room allocations, expenses, and hostel inventory."
+---
+
+<Info>
+  All endpoints require JWT authentication via the `Authorization: Bearer <token>` header or the `access_token` cookie.
+</Info>
+
+## Endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/api/hostel/registrations` | Register a new hostel resident |
+| `GET` | `/api/hostel/registrations` | List all registrations |
+| `GET` | `/api/hostel/registrations/:id` | Get registration by ID |
+| `PATCH` | `/api/hostel/registrations/:id` | Update a registration |
+| `DELETE` | `/api/hostel/registrations/:id` | Delete a registration |
+| `POST` | `/api/hostel/rooms` | Create a room |
+| `GET` | `/api/hostel/rooms` | List all rooms |
+| `GET` | `/api/hostel/rooms/:id` | Get room by ID |
+| `PATCH` | `/api/hostel/rooms/:id` | Update a room |
+| `DELETE` | `/api/hostel/rooms/:id` | Delete a room |
+| `POST` | `/api/hostel/allocations` | Allocate a room to a resident |
+| `DELETE` | `/api/hostel/allocations/:id` | Deallocate a room |
+| `POST` | `/api/hostel/expenses` | Record a hostel expense |
+| `GET` | `/api/hostel/expenses` | List all hostel expenses |
+| `GET` | `/api/hostel/expenses/:id` | Get expense by ID |
+| `PATCH` | `/api/hostel/expenses/:id` | Update an expense |
+| `DELETE` | `/api/hostel/expenses/:id` | Delete an expense |
+| `POST` | `/api/hostel/inventory` | Add hostel inventory item |
+| `GET` | `/api/hostel/inventory` | List hostel inventory |
+| `GET` | `/api/hostel/inventory/:id` | Get inventory item by ID |
+| `PATCH` | `/api/hostel/inventory/:id` | Update inventory item |
+| `DELETE` | `/api/hostel/inventory/:id` | Delete inventory item |
+
+---
+
+## Registrations
+
+A registration records a student's (or external resident's) enrolment in the hostel.
+
+### POST /api/hostel/registrations
+
+<ParamField body="hostelName" type="string" required>
+  Name of the hostel block.
+</ParamField>
+
+<ParamField body="registrationDate" type="string" required>
+  Registration date (ISO date string).
+</ParamField>
+
+<ParamField body="studentId" type="number">
+  School student ID (if the resident is an enrolled student).
+</ParamField>
+
+<ParamField body="externalName" type="string">
+  Name of an external resident (if not a school student).
+</ParamField>
+
+<ParamField body="externalInstitute" type="string">
+  External resident's institute.
+</ParamField>
+
+<ParamField body="externalGuardianName" type="string">
+  Guardian name for an external resident.
+</ParamField>
+
+<ParamField body="externalGuardianNumber" type="string">
+  Guardian contact for an external resident.
+</ParamField>
+
+<ParamField body="status" type="string">
+  Registration status (e.g. `ACTIVE`, `INACTIVE`).
+</ParamField>
+
+```bash
+curl -X POST http://localhost:3003/api/hostel/registrations \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"hostelName": "Block A", "registrationDate": "2025-03-01", "studentId": 42}'
+```
+
+---
+
+## Rooms
+
+### POST /api/hostel/rooms
+
+<ParamField body="roomNumber" type="string" required>
+  Room number or identifier.
+</ParamField>
+
+<ParamField body="roomType" type="string" required>
+  Room type: `single`, `double`, or `triple`.
+</ParamField>
+
+<ParamField body="capacity" type="number" required>
+  Maximum occupancy.
+</ParamField>
+
+<ParamField body="hostelName" type="string">
+  Hostel block this room belongs to.
+</ParamField>
+
+<ParamField body="status" type="string">
+  Room status: `vacant`, `occupied`, or `maintenance`.
+</ParamField>
+
+```bash
+curl -X POST http://localhost:3003/api/hostel/rooms \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"roomNumber": "A-101", "roomType": "double", "capacity": 2, "hostelName": "Block A"}'
+```
+
+---
+
+## Room allocations
+
+### POST /api/hostel/allocations
+
+Allocate a room to a student or external resident.
+
+<ParamField body="roomId" type="string" required>
+  Room ID.
+</ParamField>
+
+<ParamField body="allocationDate" type="string" required>
+  Allocation date (ISO date string).
+</ParamField>
+
+<ParamField body="studentId" type="number">
+  School student ID.
+</ParamField>
+
+<ParamField body="externalName" type="string">
+  Name of external resident.
+</ParamField>
+
+```bash
+curl -X POST http://localhost:3003/api/hostel/allocations \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"roomId": "room-uuid", "studentId": 42, "allocationDate": "2025-03-01"}'
+```
+
+### DELETE /api/hostel/allocations/:id
+
+Remove a room allocation (check-out a resident).
+
+<ParamField path="id" type="string" required>
+  Allocation record ID.
+</ParamField>
+
+---
+
+## Expenses
+
+### POST /api/hostel/expenses
+
+Record a hostel operational expense.
+
+<ParamField body="expenseTitle" type="string" required>
+  Title or description of the expense.
+</ParamField>
+
+<ParamField body="amount" type="number" required>
+  Expense amount.
+</ParamField>
+
+<ParamField body="date" type="string" required>
+  Expense date (ISO date string).
+</ParamField>
+
+<ParamField body="remarks" type="string">
+  Optional remarks.
+</ParamField>
+
+```bash
+curl -X POST http://localhost:3003/api/hostel/expenses \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"expenseTitle": "Electricity Bill", "amount": 12000, "date": "2025-03-31"}'
+```
+
+---
+
+## Inventory
+
+### POST /api/hostel/inventory
+
+Add an inventory item to the hostel.
+
+<Note>
+  Hostel inventory fields vary — consult `CreateInventoryDto` for the current schema. Typically includes item name, quantity, condition, and purchase date.
+</Note>
+
+```bash
+curl -X POST http://localhost:3003/api/hostel/inventory \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"itemName": "Mattress", "quantity": 10, "condition": "NEW"}'
+```

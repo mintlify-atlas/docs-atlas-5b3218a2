@@ -1,0 +1,136 @@
+---
+title: "Frontend architecture"
+description: "React admin panel structure, permission-based routing, and data fetching for Concordia PSH."
+---
+
+The admin panel is a React 18 single-page application built with Vite. It communicates with the NestJS backend over a JSON REST API and uses HTTP-only cookies for authentication.
+
+## Technology stack
+
+| Layer | Technology | Version |
+|---|---|---|
+| Build tool | Vite | `^7.1.12` |
+| UI framework | React | `^18.3.1` |
+| Language | TypeScript / JSX | `^5.8.3` |
+| Routing | React Router | `^6.30.1` |
+| Server state | TanStack Query | `^5.90.5` |
+| Component library | shadcn/ui (Radix UI) | various |
+| Styling | Tailwind CSS | `^3.4.18` |
+| HTTP client | Axios | `^1.13.1` |
+| Forms | React Hook Form + Zod | `^7.61.1` / `^3.25.76` |
+| Charts | Recharts | `^2.15.4` |
+| Icons | Lucide React | `^0.462.0` |
+
+## Application structure
+
+The entry point is `admin-panel/src/App.jsx`. The component tree wraps the entire application in several providers:
+
+```
+ThemeProvider (light/dark mode)
+└── DataProvider (shared context)
+    └── TooltipProvider
+        └── BrowserRouter
+            └── Routes
+                ├── / → RootRoutes (determines landing page)
+                ├── /login → Login
+                ├── /dashboard → PermissionRoute → Dashboard
+                ├── /front-office → PermissionRoute → FrontOffice
+                ├── /students → PermissionRoute → Students
+                ├── /staff → PermissionRoute → Staff
+                ├── /attendance → PermissionRoute → Attendance
+                ├── /fee-management → PermissionRoute → FeeManagement
+                ├── /examination → PermissionRoute → Examination
+                ├── /academics → PermissionRoute → Academics
+                ├── /hr-payroll → PermissionRoute → HRPayroll
+                ├── /hostel → PermissionRoute → Hostel
+                ├── /finance → PermissionRoute → Finance
+                ├── /inventory → PermissionRoute → Inventory
+                ├── /configuration → PermissionRoute → Configuration
+                └── * → NotFound
+```
+
+## Routes and modules
+
+| Path | Module name | Page component |
+|---|---|---|
+| `/dashboard` | `Dashboard` | `Dashboard` |
+| `/front-office` | `Front Office` | `FrontOffice` |
+| `/students` | `Students` | `Students` |
+| `/staff` | `Staff` | `Staff` |
+| `/attendance` | `Attendance` | `Attendance` |
+| `/fee-management` | `Fee Management` | `FeeManagement` |
+| `/examination` | `Examination` | `Examination` |
+| `/academics` | `Academics` | `Academics` |
+| `/hr-payroll` | `HR & Payroll` | `HRPayroll` |
+| `/hostel` | `Hostel` | `Hostel` |
+| `/finance` | `Finance` | `Finance` |
+| `/inventory` | `Inventory` | `Inventory` |
+| `/configuration` | `Configuration` | `Configuration` |
+
+## Permission-based routing
+
+Every protected route is wrapped in a `PermissionRoute` component that enforces module-level access control before rendering the page.
+
+### How `PermissionRoute` works
+
+1. It calls `userWho()` (via TanStack Query) to fetch the current user from `/api/auth/me`.
+2. If the request returns `401`, it calls `refreshTokens()` to silently refresh the access token, then retries.
+3. If the user is not authenticated after the refresh attempt, they are redirected to `/`.
+4. If the user's `role` is `SUPER_ADMIN`, access is granted unconditionally.
+5. For `ADMIN` users, the component checks whether the route's `moduleName` is present in `currentUser.permissions.modules` (a JSON array stored in the database).
+6. Teachers (`role === "Teacher"`) always have access to `Attendance` and `Examination` regardless of their stored permissions.
+7. If access is denied, the user is redirected to their default landing page.
+
+### Role summary
+
+| Role | Access |
+|---|---|
+| `SUPER_ADMIN` | All modules, unrestricted |
+| `ADMIN` | Only modules listed in `permissions.modules` |
+| `Teacher` | `Attendance` and `Examination` (hardcoded) |
+
+### Default landing page
+
+When a user navigates to `/`, the `RootRoutes` component determines their first accessible module by iterating through the `menuOrder` array in menu display order and returning the path of the first permitted module. `SUPER_ADMIN` users always land on `/dashboard`.
+
+## Data fetching and token refresh
+
+TanStack Query is used for all server state. The query client is configured globally and shared across the application through React context.
+
+The `PermissionRoute` component and root `RootRoutes` component both implement the same 401-retry pattern:
+
+```javascript
+try {
+  return await userWho();
+} catch (error) {
+  if (error.response?.status === 401) {
+    try {
+      await refreshTokens(); // POST /api/auth/refresh
+      return await userWho();
+    } catch {
+      navigate('/login');
+    }
+  }
+}
+```
+
+This ensures that a user whose access token has expired is transparently re-authenticated using their refresh token cookie, without being logged out.
+
+## Component library
+
+The admin panel uses [shadcn/ui](https://ui.shadcn.com/), a collection of accessible, unstyled components built on top of Radix UI primitives and styled with Tailwind CSS.
+
+All Radix UI packages are listed as direct dependencies (e.g., `@radix-ui/react-dialog`, `@radix-ui/react-select`). This means the component source is vendored into the project and can be customized directly.
+
+Notable UI dependencies:
+
+| Package | Purpose |
+|---|---|
+| `react-hook-form` + `zod` | Form validation and submission |
+| `react-day-picker` | Date picker in form fields |
+| `recharts` | Charts on the dashboard |
+| `react-quill` | Rich-text editor for descriptions |
+| `sonner` + `@radix-ui/react-toast` | Toast notifications |
+| `embla-carousel-react` | Image carousels |
+| `cmdk` | Command palette / search |
+| `lucide-react` | Icon set |

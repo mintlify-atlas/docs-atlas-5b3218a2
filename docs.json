@@ -1,122 +1,113 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "theme": "mint",
-  "name": "Mint Starter Kit",
+  "name": "Concordia PSH",
+  "theme": "linden",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#1E3A5F",
+    "light": "#E8F0F7",
+    "dark": "#0F1E30"
   },
-  "favicon": "/favicon.svg",
+  "navbar": {
+    "primary": {
+      "type": "github",
+      "href": "https://github.com/Atif-Muhammad/concordia-psh"
+    }
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/Atif-Muhammad/concordia-psh"
+    }
+  },
   "navigation": {
     "tabs": [
       {
-        "tab": "Guides",
+        "tab": "Overview",
         "groups": [
           {
-            "group": "Getting started",
+            "group": "Get Started",
             "pages": [
-              "index",
+              "introduction",
               "quickstart",
-              "development"
+              "deployment"
             ]
           },
           {
-            "group": "Customization",
+            "group": "Architecture",
             "pages": [
-              "essentials/settings",
-              "essentials/navigation"
-            ]
-          },
-          {
-            "group": "Writing content",
-            "pages": [
-              "essentials/markdown",
-              "essentials/code",
-              "essentials/images",
-              "essentials/reusable-snippets"
-            ]
-          },
-          {
-            "group": "AI tools",
-            "pages": [
-              "ai-tools/cursor",
-              "ai-tools/claude-code",
-              "ai-tools/windsurf"
+              "architecture/overview",
+              "architecture/backend",
+              "architecture/frontend",
+              "architecture/database"
             ]
           }
         ]
       },
       {
-        "tab": "API reference",
+        "tab": "Modules",
         "groups": [
           {
-            "group": "API documentation",
+            "group": "Administration",
             "pages": [
-              "api-reference/introduction"
+              "modules/dashboard",
+              "modules/configuration",
+              "modules/front-office"
             ]
           },
           {
-            "group": "Endpoint examples",
+            "group": "Academics",
             "pages": [
-              "api-reference/endpoint/get",
-              "api-reference/endpoint/create",
-              "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook"
+              "modules/academics",
+              "modules/students",
+              "modules/staff",
+              "modules/attendance",
+              "modules/examination"
+            ]
+          },
+          {
+            "group": "Finance & HR",
+            "pages": [
+              "modules/fee-management",
+              "modules/finance",
+              "modules/hr-payroll"
+            ]
+          },
+          {
+            "group": "Facilities",
+            "pages": [
+              "modules/hostel",
+              "modules/inventory"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Authentication",
+            "pages": [
+              "api/authentication"
+            ]
+          },
+          {
+            "group": "Endpoints",
+            "pages": [
+              "api/students",
+              "api/staff",
+              "api/academics",
+              "api/attendance",
+              "api/fee-management",
+              "api/examination",
+              "api/hr-payroll",
+              "api/hostel",
+              "api/finance",
+              "api/inventory",
+              "api/front-office",
+              "api/configuration"
             ]
           }
         ]
       }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
-        },
-        {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
-        }
-      ]
-    }
-  },
-  "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
-  },
-  "navbar": {
-    "links": [
-      {
-        "label": "Support",
-        "href": "mailto:hi@mintlify.com"
-      }
-    ],
-    "primary": {
-      "type": "button",
-      "label": "Dashboard",
-      "href": "https://dashboard.mintlify.com"
-    }
-  },
-  "contextual": {
-    "options": [
-     "copy",
-     "view",
-     "chatgpt",
-     "claude",
-     "perplexity",
-     "mcp",
-     "cursor",
-     "vscode"
-   ]
-  },
-  "footer": {
-    "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
-    }
+    ]
   }
 }

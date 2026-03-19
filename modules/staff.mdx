@@ -1,0 +1,128 @@
+---
+title: "Staff"
+description: "Manage teaching and non-teaching staff profiles, including contract details, documents, and department assignments."
+---
+
+## Overview
+
+The Staff module manages all employees of the institution. A single staff record can serve as both a teacher and a non-teaching employee by using the `isTeaching` and `isNonTeaching` flags. Teaching staff have specialization and department fields, while non-teaching employees have a designation and employee department. Staff created here are also used in the Academics, Attendance, HR, and Payroll modules.
+
+<Note>
+  A staff member must have at least one role flag set (`isTeaching` or `isNonTeaching`). Both can be true simultaneously for staff who perform both roles.
+</Note>
+
+## Key features
+
+<CardGroup cols={2}>
+  <Card title="Teaching staff" icon="user-graduate">
+    Create teacher profiles with specialization (subject area), highest academic degree, and department. Teachers are assigned to subjects and classes in the Academics module.
+  </Card>
+  <Card title="Non-teaching staff" icon="user-tie">
+    Create non-teaching employee profiles with a designation and employee department (ADMIN, FINANCE, SECURITY, TRANSPORT, CLASS_4, MAINTENANCE, IT_SUPPORT, LIBRARY, LAB, or OTHER).
+  </Card>
+  <Card title="Staff types" icon="briefcase">
+    Staff are classified as PERMANENT or CONTRACT. Contract staff have `contractStart` and `contractEnd` dates.
+  </Card>
+  <Card title="Staff status" icon="toggle-on">
+    Track whether staff are ACTIVE, TERMINATED, or RETIRED. Only ACTIVE staff appear in attendance and payroll sheets.
+  </Card>
+  <Card title="Photo and documents" icon="image">
+    Upload a staff photo (max 5 MB, stored on Cloudinary). Attach documents (certificates, contracts) as a JSON object.
+  </Card>
+  <Card title="Deletion safeguards" icon="shield">
+    Staff who are HOD, assigned to classes, or teaching subjects cannot be deleted until those assignments are removed first.
+  </Card>
+</CardGroup>
+
+## Workflows
+
+<Tabs>
+  <Tab title="Create teaching staff">
+    <Steps>
+      <Step title="Open Staff module">
+        Navigate to the Staff section and select the teaching staff view.
+      </Step>
+      <Step title="Fill in profile">
+        Enter name, father's name, email (used for login), phone, CNIC, address, specialization, highest degree, basic pay, join date, and staff type.
+      </Step>
+      <Step title="Set password">
+        Enter a login password. It is hashed with bcrypt before storing.
+      </Step>
+      <Step title="Assign department">
+        Select the academic department the teacher belongs to.
+      </Step>
+      <Step title="Upload photo and documents">
+        Optionally upload a photo and attach supporting document URLs.
+      </Step>
+      <Step title="Submit">
+        The record is created with `isTeaching = true`. Duplicate emails are rejected.
+      </Step>
+    </Steps>
+  </Tab>
+  <Tab title="Create non-teaching staff">
+    <Steps>
+      <Step title="Fill in profile">
+        Enter name, CNIC, address, designation, employee department, staff type, basic pay, and join date.
+      </Step>
+      <Step title="Submit">
+        The record is created with `isNonTeaching = true`.
+      </Step>
+    </Steps>
+  </Tab>
+  <Tab title="Update or delete">
+    <Steps>
+      <Step title="Update profile">
+        Edit any field including the password, basic pay, status, or contract dates. Uploading a new photo automatically deletes the old Cloudinary asset.
+      </Step>
+      <Step title="Terminate or retire">
+        Change the `status` to `TERMINATED` or `RETIRED`. Enter a `leaveDate` if applicable.
+      </Step>
+      <Step title="Delete">
+        The system checks for HOD assignment, class/section mappings, and subject mappings before allowing deletion. Remove these dependencies first.
+      </Step>
+    </Steps>
+  </Tab>
+</Tabs>
+
+## Data fields
+
+<AccordionGroup>
+  <Accordion title="Core profile">
+    | Field | Description |
+    |-------|-------------|
+    | `name` | Full name |
+    | `fatherName` | Father's name |
+    | `email` | Login email (unique) |
+    | `phone` | Phone number |
+    | `cnic` | National ID number (unique) |
+    | `address` | Home address |
+    | `photo_url` | Cloudinary photo URL |
+    | `documents` | JSON object of attached document URLs |
+    | `staffType` | `PERMANENT` or `CONTRACT` |
+    | `status` | `ACTIVE`, `TERMINATED`, or `RETIRED` |
+    | `basicPay` | Base monthly salary |
+    | `joinDate` | Date of joining |
+    | `leaveDate` | Date of termination or retirement |
+    | `contractStart` | Contract start date (for CONTRACT type) |
+    | `contractEnd` | Contract end date (for CONTRACT type) |
+  </Accordion>
+  <Accordion title="Teaching-specific fields">
+    | Field | Description |
+    |-------|-------------|
+    | `isTeaching` | `true` if this staff member is a teacher |
+    | `specialization` | Subject area or teaching specialization |
+    | `highestDegree` | Highest academic qualification |
+    | `departmentId` | Linked academic department |
+  </Accordion>
+  <Accordion title="Non-teaching-specific fields">
+    | Field | Description |
+    |-------|-------------|
+    | `isNonTeaching` | `true` if this staff member is a non-teaching employee |
+    | `designation` | Job title (e.g., Accountant, Security Guard) |
+    | `empDepartment` | `ADMIN`, `FINANCE`, `SECURITY`, `TRANSPORT`, `CLASS_4`, `MAINTENANCE`, `IT_SUPPORT`, `LIBRARY`, `LAB`, or `OTHER` |
+  </Accordion>
+</AccordionGroup>
+
+## Permissions
+
+This module requires the `staff` permission in `admin.permissions.modules`. Teaching staff management may also be accessed through the `academics` module context.

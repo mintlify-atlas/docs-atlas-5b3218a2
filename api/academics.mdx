@@ -1,0 +1,321 @@
+---
+title: "Academics API"
+description: "Manage programs, classes, sections, subjects, teacher-subject mappings, and timetables."
+---
+
+<Info>
+  All endpoints require JWT authentication via the `Authorization: Bearer <token>` header or the `access_token` cookie.
+</Info>
+
+## Resources
+
+- **Programs** — top-level academic programs (e.g. BS Computer Science)
+- **Classes** — years or semesters within a program
+- **Sections** — class subdivisions (A, B, C …)
+- **Subjects** — individual courses within a class
+- **TSM (Teacher-Subject Mapping)** — assigns a teacher to a subject
+- **TCM (Teacher-Class Mapping)** — assigns a teacher to a class
+- **Timetable** — per-class schedule entries
+
+---
+
+## Programs
+
+### GET /api/academics/program/get/all
+
+Return all academic programs with full details.
+
+```bash
+curl http://localhost:3003/api/academics/program/get/all \
+  -H "Authorization: Bearer <access_token>"
+```
+
+### GET /api/academics/program/get/all/names
+
+Return a lightweight list of program IDs and names.
+
+### POST /api/academics/program/create
+
+<ParamField body="name" type="string" required>
+  Program name.
+</ParamField>
+
+<ParamField body="level" type="string" required>
+  Academic level (e.g. `UNDERGRADUATE`, `GRADUATE`).
+</ParamField>
+
+<ParamField body="departmentId" type="string | number" required>
+  ID of the department that owns this program.
+</ParamField>
+
+<ParamField body="duration" type="string" required>
+  Program duration (e.g. `4 years`).
+</ParamField>
+
+<ParamField body="description" type="string">
+  Optional description.
+</ParamField>
+
+<ParamField body="rollPrefix" type="string">
+  Prefix used when auto-generating roll numbers.
+</ParamField>
+
+```bash
+curl -X POST http://localhost:3003/api/academics/program/create \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "BS Computer Science", "level": "UNDERGRADUATE", "departmentId": 1, "duration": "4 years"}'
+```
+
+### PATCH /api/academics/program/update
+
+<ParamField query="programID" type="number" required>
+  ID of the program to update.
+</ParamField>
+
+Accepts the same fields as the create endpoint, all optional.
+
+### DELETE /api/academics/program/remove
+
+<ParamField query="programID" type="number" required>
+  ID of the program to delete.
+</ParamField>
+
+---
+
+## Classes
+
+### GET /api/academics/class/get/all
+
+Return all classes.
+
+### POST /api/academics/class/create
+
+<ParamField body="name" type="string" required>
+  Class name (e.g. `Year 1`, `Semester 1`).
+</ParamField>
+
+<ParamField body="programId" type="string" required>
+  ID of the parent program.
+</ParamField>
+
+<ParamField body="year" type="string | number">
+  Academic year number.
+</ParamField>
+
+<ParamField body="semester" type="string | number">
+  Semester number.
+</ParamField>
+
+<ParamField body="isSemester" type="boolean">
+  Whether this class uses semester-based progression.
+</ParamField>
+
+<ParamField body="rollPrefix" type="string">
+  Roll number prefix override for this class.
+</ParamField>
+
+```bash
+curl -X POST http://localhost:3003/api/academics/class/create \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Year 1", "programId": "2", "year": 1}'
+```
+
+### PATCH /api/academics/class/update
+
+<ParamField query="classID" type="number" required>
+  ID of the class to update.
+</ParamField>
+
+### DELETE /api/academics/class/remove
+
+<ParamField query="classID" type="number" required>
+  ID of the class to delete.
+</ParamField>
+
+---
+
+## Sections
+
+### GET /api/academics/section/get/all
+
+Return all sections.
+
+### POST /api/academics/section/create
+
+<ParamField body="name" type="string" required>
+  Section name (e.g. `A`, `B`).
+</ParamField>
+
+<ParamField body="classId" type="string" required>
+  ID of the parent class.
+</ParamField>
+
+```bash
+curl -X POST http://localhost:3003/api/academics/section/create \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "A", "classId": "3"}'
+```
+
+### PATCH /api/academics/section/update
+
+<ParamField query="secID" type="number" required>
+  Section ID.
+</ParamField>
+
+### DELETE /api/academics/section/remove
+
+<ParamField query="secID" type="number" required>
+  Section ID.
+</ParamField>
+
+---
+
+## Subjects
+
+### GET /api/academics/subject/get/all
+
+Return all subjects.
+
+### POST /api/academics/subject/create
+
+<ParamField body="name" type="string" required>
+  Subject name.
+</ParamField>
+
+<ParamField body="classId" type="string | number" required>
+  ID of the class this subject belongs to.
+</ParamField>
+
+<ParamField body="code" type="string">
+  Subject code.
+</ParamField>
+
+<ParamField body="creditHours" type="string | number">
+  Credit hours.
+</ParamField>
+
+<ParamField body="description" type="string">
+  Optional description.
+</ParamField>
+
+```bash
+curl -X POST http://localhost:3003/api/academics/subject/create \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Data Structures", "classId": 3, "code": "CS-201", "creditHours": 3}'
+```
+
+### PATCH /api/academics/subject/update
+
+<ParamField query="subID" type="number" required>
+  Subject ID.
+</ParamField>
+
+### DELETE /api/academics/subject/remove
+
+<ParamField query="subID" type="number" required>
+  Subject ID.
+</ParamField>
+
+---
+
+## Teacher-Subject Mapping (TSM)
+
+Assigns a teacher to a subject.
+
+### GET /api/academics/tsm/get/all
+
+Return all teacher-subject mappings.
+
+### POST /api/academics/tsm/create
+
+<ParamField body="teacherId" type="string" required>
+  Teacher's ID.
+</ParamField>
+
+<ParamField body="subjectId" type="string" required>
+  Subject ID.
+</ParamField>
+
+```bash
+curl -X POST http://localhost:3003/api/academics/tsm/create \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"teacherId": "7", "subjectId": "12"}'
+```
+
+### PATCH /api/academics/tsm/update
+
+<ParamField query="tsmID" type="number" required>
+  TSM record ID.
+</ParamField>
+
+### DELETE /api/academics/tsm/remove
+
+<ParamField query="tsmID" type="number" required>
+  TSM record ID.
+</ParamField>
+
+---
+
+## Teacher-Class Mapping (TCM)
+
+Assigns a teacher to a class (e.g. as class teacher).
+
+### GET /api/academics/tcm/get/all
+
+Return all teacher-class mappings.
+
+### POST /api/academics/tcm/create
+
+<ParamField body="teacherId" type="string" required>
+  Teacher's ID.
+</ParamField>
+
+<ParamField body="classId" type="string" required>
+  Class ID.
+</ParamField>
+
+### PATCH /api/academics/tcm/update
+
+<ParamField query="tcmID" type="number" required>
+  TCM record ID.
+</ParamField>
+
+### DELETE /api/academics/tcm/remove
+
+<ParamField query="tcmID" type="number" required>
+  TCM record ID.
+</ParamField>
+
+---
+
+## Timetable
+
+### GET /api/academics/timetable/get/all
+
+Return all timetable entries.
+
+```bash
+curl http://localhost:3003/api/academics/timetable/get/all \
+  -H "Authorization: Bearer <access_token>"
+```
+
+### POST /api/academics/timetable/create
+
+Create a timetable entry. Fields depend on the `TimetableDto` (day, period, classId, sectionId, subjectId, teacherId, startTime, endTime).
+
+### PATCH /api/academics/timetable/update
+
+<ParamField query="timetableId" type="number" required>
+  Timetable entry ID.
+</ParamField>
+
+### DELETE /api/academics/timetable/remove
+
+<ParamField query="timetableId" type="number" required>
+  Timetable entry ID.
+</ParamField>

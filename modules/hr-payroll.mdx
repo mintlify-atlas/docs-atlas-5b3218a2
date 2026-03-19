@@ -1,0 +1,161 @@
+---
+title: "HR & Payroll"
+description: "Manage staff payroll, leaves, advance salaries, attendance, and holidays."
+---
+
+## Overview
+
+The HR & Payroll module handles all human resource operations for both teaching and non-teaching staff. Each month, admins generate a payroll sheet showing calculated salaries, allowances, and deductions. Leave requests are tracked and approved or rejected, with approved leaves automatically reflected in attendance records. Advance salary disbursements are managed separately and deducted from the monthly payroll.
+
+## Key features
+
+<CardGroup cols={2}>
+  <Card title="Monthly payroll sheet" icon="file-invoice-dollar">
+    View a payroll sheet for any month, filtered by staff type (teachers, employees, or all). Shows basic salary, all allowances, all deductions, and net salary per staff member.
+  </Card>
+  <Card title="Payroll processing" icon="money-bill-wave">
+    Save payroll records per staff per month. Mark as PAID with a payment date. Paid payrolls appear as salary expenses in the Finance module.
+  </Card>
+  <Card title="Salary components" icon="sliders">
+    Allowances: travel, house rent, medical, insurance, extra, other. Deductions: absent, leave, security, advance, income tax, EOBI, late arrival, other.
+  </Card>
+  <Card title="Staff leave management" icon="calendar-minus">
+    Log leave requests for staff with start date, end date, days, reason, and status. Approved leaves mark attendance as LEAVE; rejected leaves mark as ABSENT.
+  </Card>
+  <Card title="Advance salary" icon="hand-holding-dollar">
+    Issue advance salary amounts to staff for a specific month. Advances are automatically used as the `advanceDeduction` in the payroll calculation.
+  </Card>
+  <Card title="Staff attendance" icon="clipboard-user">
+    View and manually mark daily attendance for all staff (teaching and non-teaching). Absent and leave counts from attendance feed into payroll deduction calculations.
+  </Card>
+  <Card title="Holiday management" icon="umbrella-beach">
+    Create holidays with a title, type, date range, and optional yearly repeat. Holidays block attendance marking on affected dates system-wide.
+  </Card>
+  <Card title="Payroll templates" icon="print">
+    Create and manage HTML templates for salary slip and payroll sheet printing.
+  </Card>
+</CardGroup>
+
+## Workflows
+
+<Tabs>
+  <Tab title="Monthly payroll">
+    <Steps>
+      <Step title="Open payroll sheet">
+        Select the month (YYYY-MM) and filter by staff type. The system loads all active staff with their attendance summary and any existing payroll records.
+      </Step>
+      <Step title="Review calculated values">
+        The system auto-calculates absent and leave deductions based on payroll settings. Advance salary deductions are included automatically.
+      </Step>
+      <Step title="Override values if needed">
+        Enter custom allowance or deduction values for individual staff members. The net salary is recalculated.
+      </Step>
+      <Step title="Save payroll">
+        Submit the payroll record for each staff member. Status is `UNPAID` initially.
+      </Step>
+      <Step title="Mark as paid">
+        Update the payroll status to `PAID` and set the payment date. The record then appears as a salary expense in Finance.
+      </Step>
+    </Steps>
+  </Tab>
+  <Tab title="Staff leave">
+    <Steps>
+      <Step title="Create leave entry">
+        Select the staff member, enter the month, start date, end date, number of days, and reason.
+      </Step>
+      <Step title="Approve or reject">
+        Update status to `APPROVED` or `REJECTED`. On approval, attendance records for all covered past and current dates are upserted as LEAVE (or ABSENT for rejected).
+      </Step>
+    </Steps>
+  </Tab>
+  <Tab title="Advance salary">
+    <Steps>
+      <Step title="Issue an advance">
+        Enter the staff member, month, amount, and optional remarks. The advance is created with `adjusted = false`.
+      </Step>
+      <Step title="Auto-deduction">
+        In the payroll sheet for the same month, the advance amount replaces the manual `advanceDeduction` field if it is greater than zero.
+      </Step>
+      <Step title="Mark as adjusted">
+        Update `adjusted = true` once the advance has been recovered from the payroll.
+      </Step>
+    </Steps>
+  </Tab>
+  <Tab title="Holidays">
+    <Steps>
+      <Step title="Create a holiday">
+        Enter the title, type (e.g., `National`, `Religious`), start date, optional end date (for multi-day holidays), and whether it repeats yearly.
+      </Step>
+      <Step title="Multi-day holidays">
+        If an end date is provided, the system creates one holiday entry per day in the range.
+      </Step>
+      <Step title="Delete a holiday">
+        Remove a holiday record. Attendance restrictions for that date are lifted immediately.
+      </Step>
+    </Steps>
+  </Tab>
+</Tabs>
+
+## Data fields
+
+<AccordionGroup>
+  <Accordion title="Payroll record">
+    | Field | Description |
+    |-------|-------------|
+    | `month` | Month in YYYY-MM format |
+    | `staffId` | Linked staff member |
+    | `basicSalary` | Base monthly salary |
+    | `travelAllowance` | Travel allowance |
+    | `houseRentAllowance` | House rent allowance |
+    | `medicalAllowance` | Medical allowance |
+    | `insuranceAllowance` | Insurance allowance |
+    | `extraAllowance` | Extra performance allowance |
+    | `otherAllowance` | Any other allowance |
+    | `totalAllowances` | Sum of all allowances |
+    | `securityDeduction` | Security deposit deduction |
+    | `advanceDeduction` | Advance salary deduction |
+    | `absentDeduction` | Absent days deduction |
+    | `leaveDeduction` | Leave days deduction |
+    | `incomeTax` | Income tax deduction |
+    | `eobi` | EOBI contribution deduction |
+    | `lateArrivalDeduction` | Late arrival deduction |
+    | `otherDeduction` | Any other deduction |
+    | `totalDeductions` | Sum of all deductions |
+    | `netSalary` | `basicSalary + totalAllowances - totalDeductions` |
+    | `status` | `UNPAID` or `PAID` |
+    | `paymentDate` | Date payment was processed |
+  </Accordion>
+  <Accordion title="Staff leave">
+    | Field | Description |
+    |-------|-------------|
+    | `staffId` | Linked staff member |
+    | `month` | Month the leave applies to (YYYY-MM) |
+    | `startDate` | Leave start date |
+    | `endDate` | Leave end date |
+    | `days` | Number of leave days |
+    | `reason` | Reason for leave |
+    | `status` | `PENDING`, `APPROVED`, `REJECTED`, or `CANCELLED` |
+  </Accordion>
+  <Accordion title="Advance salary">
+    | Field | Description |
+    |-------|-------------|
+    | `staffId` | Linked staff member |
+    | `amount` | Advance amount |
+    | `month` | Month (YYYY-MM) |
+    | `remarks` | Optional notes |
+    | `adjusted` | `true` if the advance has been deducted from payroll |
+  </Accordion>
+  <Accordion title="Holiday">
+    | Field | Description |
+    |-------|-------------|
+    | `date` | Holiday date |
+    | `title` | Holiday name |
+    | `type` | Type: `National`, `Religious`, `Gazetted`, etc. |
+    | `repeatYearly` | If `true`, blocks the same month/day every year |
+    | `description` | Optional description |
+  </Accordion>
+</AccordionGroup>
+
+## Permissions
+
+This module requires the `hr-payroll` permission in `admin.permissions.modules`.

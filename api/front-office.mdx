@@ -1,0 +1,309 @@
+---
+title: "Front Office API"
+description: "Manage admissions inquiries, visitor logs, complaints, and contacts."
+---
+
+<Info>
+  All endpoints require JWT authentication via the `Authorization: Bearer <token>` header or the `access_token` cookie.
+</Info>
+
+## Endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/front-office/get/inquiries` | List inquiries |
+| `POST` | `/api/front-office/create/inquiry` | Create an inquiry |
+| `PATCH` | `/api/front-office/update/inquiry` | Update an inquiry |
+| `DELETE` | `/api/front-office/delete/inquiry` | Delete an inquiry |
+| `PATCH` | `/api/front-office/rollback/inquiry` | Rollback an inquiry status |
+| `POST` | `/api/front-office/create/visitor` | Log a visitor |
+| `GET` | `/api/front-office/get/visitors` | List visitors |
+| `PATCH` | `/api/front-office/update/visitor` | Update a visitor record |
+| `DELETE` | `/api/front-office/delete/visitor` | Delete a visitor record |
+| `POST` | `/api/front-office/create/complaint` | Submit a complaint |
+| `GET` | `/api/front-office/get/complaints` | List complaints |
+| `PATCH` | `/api/front-office/update/complaint` | Update a complaint |
+| `DELETE` | `/api/front-office/delete/complaint` | Delete a complaint |
+| `POST` | `/api/front-office/create/contact` | Create a contact |
+| `GET` | `/api/front-office/get/contacts` | List contacts |
+| `PATCH` | `/api/front-office/update/contact` | Update a contact |
+| `DELETE` | `/api/front-office/delete/contact` | Delete a contact |
+
+---
+
+## Inquiries
+
+An inquiry records a prospective student's interest in admission.
+
+### GET /api/front-office/get/inquiries
+
+<ParamField query="programId" type="number">
+  Filter by program of interest.
+</ParamField>
+
+<ParamField query="page" type="number">
+  Page number. Defaults to `1`.
+</ParamField>
+
+<ParamField query="limit" type="number">
+  Results per page. Defaults to `10`.
+</ParamField>
+
+```bash
+curl "http://localhost:3003/api/front-office/get/inquiries?page=1&limit=20" \
+  -H "Authorization: Bearer <access_token>"
+```
+
+### POST /api/front-office/create/inquiry
+
+<ParamField body="studentName" type="string" required>
+  Prospective student's name.
+</ParamField>
+
+<ParamField body="fatherName" type="string" required>
+  Father's name.
+</ParamField>
+
+<ParamField body="contactNumber" type="string" required>
+  Contact phone number.
+</ParamField>
+
+<ParamField body="programInterest" type="string" required>
+  Program the student is interested in.
+</ParamField>
+
+<ParamField body="fatherCnic" type="string">
+  Father's CNIC number.
+</ParamField>
+
+<ParamField body="email" type="string">
+  Email address.
+</ParamField>
+
+<ParamField body="address" type="string">
+  Home address.
+</ParamField>
+
+<ParamField body="previousInstitute" type="string">
+  Name of the previous school or college.
+</ParamField>
+
+<ParamField body="remarks" type="string">
+  Staff remarks.
+</ParamField>
+
+<ParamField body="status" type="string">
+  Inquiry status: `NEW`, `APPROVED`, `REJECTED`, or `FOLLOW_UP`.
+</ParamField>
+
+```bash
+curl -X POST http://localhost:3003/api/front-office/create/inquiry \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "studentName": "Usman Ali",
+    "fatherName": "Ali Raza",
+    "contactNumber": "03009876543",
+    "programInterest": "BS Computer Science"
+  }'
+```
+
+### PATCH /api/front-office/update/inquiry
+
+<ParamField query="id" type="number" required>
+  Inquiry ID.
+</ParamField>
+
+Accepts any subset of the create fields.
+
+### DELETE /api/front-office/delete/inquiry
+
+<ParamField query="id" type="number" required>
+  Inquiry ID.
+</ParamField>
+
+### PATCH /api/front-office/rollback/inquiry
+
+Reset an inquiry's status to `NEW`.
+
+<ParamField query="id" type="number" required>
+  Inquiry ID.
+</ParamField>
+
+---
+
+## Visitors
+
+### POST /api/front-office/create/visitor
+
+<ParamField body="visitorName" type="string" required>
+  Visitor's full name.
+</ParamField>
+
+<ParamField body="phoneNumber" type="string" required>
+  Contact phone number.
+</ParamField>
+
+<ParamField body="ID" type="string" required>
+  Visitor's ID card number.
+</ParamField>
+
+<ParamField body="purpose" type="string" required>
+  Purpose of visit.
+</ParamField>
+
+<ParamField body="persons" type="string" required>
+  Number of persons in the visiting party.
+</ParamField>
+
+<ParamField body="visitDate" type="string" required>
+  Date of visit.
+</ParamField>
+
+<ParamField body="inTime" type="string" required>
+  Check-in time.
+</ParamField>
+
+<ParamField body="outTime" type="string">
+  Check-out time.
+</ParamField>
+
+<ParamField body="remarks" type="string">
+  Optional remarks.
+</ParamField>
+
+```bash
+curl -X POST http://localhost:3003/api/front-office/create/visitor \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "visitorName": "Mr. Hassan",
+    "phoneNumber": "0321-1234567",
+    "ID": "35202-1234567-1",
+    "purpose": "Parent meeting",
+    "persons": "2",
+    "visitDate": "2025-03-15",
+    "inTime": "10:30 AM"
+  }'
+```
+
+### GET /api/front-office/get/visitors
+
+<ParamField query="month" type="string">
+  Filter by month (e.g. `2025-03`).
+</ParamField>
+
+### PATCH /api/front-office/update/visitor
+
+<ParamField query="id" type="number" required>
+  Visitor record ID.
+</ParamField>
+
+### DELETE /api/front-office/delete/visitor
+
+<ParamField query="id" type="number" required>
+  Visitor record ID.
+</ParamField>
+
+---
+
+## Complaints
+
+### POST /api/front-office/create/complaint
+
+<ParamField body="type" type="string" required>
+  Complaint type (e.g. `Academic`, `Facility`, `Behavioral`).
+</ParamField>
+
+<ParamField body="complainantName" type="string" required>
+  Name of the person filing the complaint.
+</ParamField>
+
+<ParamField body="contact" type="number" required>
+  Contact number of the complainant.
+</ParamField>
+
+<ParamField body="subject" type="string" required>
+  Complaint subject or title.
+</ParamField>
+
+<ParamField body="details" type="string" required>
+  Full complaint details.
+</ParamField>
+
+<ParamField body="status" type="string" required>
+  Current status (e.g. `OPEN`, `IN_PROGRESS`, `RESOLVED`).
+</ParamField>
+
+<ParamField body="assignedToId" type="number">
+  ID of the staff member responsible for resolution.
+</ParamField>
+
+```bash
+curl -X POST http://localhost:3003/api/front-office/create/complaint \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type": "Facility",
+    "complainantName": "Mr. Hassan",
+    "contact": 3001234567,
+    "subject": "Broken chairs",
+    "details": "Chairs in room 101 need replacement",
+    "status": "OPEN"
+  }'
+```
+
+### GET /api/front-office/get/complaints
+
+<ParamField query="date" type="string">
+  Filter by specific date.
+</ParamField>
+
+<ParamField query="start" type="string">
+  Date range start.
+</ParamField>
+
+<ParamField query="end" type="string">
+  Date range end.
+</ParamField>
+
+### PATCH /api/front-office/update/complaint
+
+<ParamField query="id" type="number" required>
+  Complaint ID.
+</ParamField>
+
+### DELETE /api/front-office/delete/complaint
+
+<ParamField query="id" type="number" required>
+  Complaint ID.
+</ParamField>
+
+---
+
+## Contacts
+
+### POST /api/front-office/create/contact
+
+Create a contact record (e.g. parent, alumni, partner).
+
+### GET /api/front-office/get/contacts
+
+List all contacts.
+
+```bash
+curl http://localhost:3003/api/front-office/get/contacts \
+  -H "Authorization: Bearer <access_token>"
+```
+
+### PATCH /api/front-office/update/contact
+
+<ParamField query="id" type="number" required>
+  Contact ID.
+</ParamField>
+
+### DELETE /api/front-office/delete/contact
+
+<ParamField query="id" type="number" required>
+  Contact ID.
+</ParamField>

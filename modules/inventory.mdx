@@ -1,0 +1,130 @@
+---
+title: "Inventory"
+description: "Track school assets, manage assignments, record maintenance expenses, and monitor stock conditions."
+---
+
+## Overview
+
+The Inventory module tracks all school assets—lab equipment, sports equipment, IT hardware, furniture, and other institutional property. Each item has purchase information, assignment details, condition status, and a linked expense log for maintenance and repair costs. Inventory purchases and maintenance expenses automatically appear in the Finance module under the Inventory expense category.
+
+## Key features
+
+<CardGroup cols={2}>
+  <Card title="Asset tracking" icon="boxes-stacked">
+    Maintain a registry of all school assets with item name, category, quantity, unit price, total value, supplier, purchase date, and location.
+  </Card>
+  <Card title="Asset assignment" icon="arrow-right-to-bracket">
+    Record where each asset is assigned—to a Class, Department, Lab, or left as Unassigned. Track the assigned name and assignment date.
+  </Card>
+  <Card title="Condition monitoring" icon="magnifying-glass">
+    Track each item's condition: New, Good, Fair, Needs Repair, or Damaged. Filter the inventory list by condition.
+  </Card>
+  <Card title="Maintenance tracking" icon="wrench">
+    Record the maintenance cost, last maintenance date, and warranty expiry date. These fields update automatically when expense records are created.
+  </Card>
+  <Card title="Expense log" icon="receipt">
+    Log individual expense entries against an inventory item with an expense type, amount, date, description, and vendor. Each entry updates the item's total maintenance cost.
+  </Card>
+  <Card title="Finance integration" icon="chart-line">
+    Inventory purchase totals and maintenance expense amounts are automatically included in the Finance module as Inventory category expenses.
+  </Card>
+</CardGroup>
+
+## Workflows
+
+<Tabs>
+  <Tab title="Add an inventory item">
+    <Steps>
+      <Step title="Fill in item details">
+        Enter the item name, category (e.g., Lab Equipment, Sports Equipment, IT Hardware), quantity, unit price, and total value.
+      </Step>
+      <Step title="Enter purchase information">
+        Set the purchase date, supplier name, and physical location (e.g., Computer Lab, Sports Room).
+      </Step>
+      <Step title="Set condition">
+        Choose the initial condition: New, Good, Fair, Needs Repair, or Damaged.
+      </Step>
+      <Step title="Assign (optional)">
+        Set the assignment target (Class, Department, Lab, or Unassigned), the assigned-to name, and the assignment date.
+      </Step>
+      <Step title="Add maintenance info (optional)">
+        Enter a warranty expiry date and any known maintenance cost.
+      </Step>
+      <Step title="Submit">
+        The item is created and appears in the inventory list.
+      </Step>
+    </Steps>
+  </Tab>
+  <Tab title="Log a maintenance expense">
+    <Steps>
+      <Step title="Select the inventory item">
+        Find the item from the inventory list.
+      </Step>
+      <Step title="Create an expense entry">
+        Enter the expense type (Maintenance, Repair, Upgrade, Replacement, or Other), amount, date, description, and optional vendor name.
+      </Step>
+      <Step title="Submit">
+        The expense record is created and the item's `maintenanceCost` is incremented by the expense amount. The `lastMaintenanceDate` is updated to the expense date.
+      </Step>
+    </Steps>
+  </Tab>
+  <Tab title="Update or remove items">
+    <Steps>
+      <Step title="Edit an item">
+        Update any field: quantity, condition, location, assignment, warranty, or pricing. Each field is updated only if a new value is provided.
+      </Step>
+      <Step title="Delete an item">
+        Remove the item record. All linked expense records are deleted automatically (cascade).
+      </Step>
+    </Steps>
+  </Tab>
+</Tabs>
+
+## Data fields
+
+<AccordionGroup>
+  <Accordion title="Inventory item">
+    | Field | Description |
+    |-------|-------------|
+    | `itemName` | Name of the item |
+    | `category` | Category (e.g., `Lab Equipment`, `Sports Equipment`, `IT Hardware`) |
+    | `quantity` | Number of units |
+    | `unitPrice` | Price per unit |
+    | `totalValue` | Total purchase cost (`quantity × unitPrice`) |
+    | `purchaseDate` | Date of purchase |
+    | `supplier` | Supplier or vendor name |
+    | `condition` | `New`, `Good`, `Fair`, `Needs Repair`, or `Damaged` |
+    | `location` | Physical location of the item |
+    | `assignedTo` | Assignment type: `Class`, `Department`, `Lab`, or `Unassigned` |
+    | `assignedToName` | Name of the class, department, or lab |
+    | `assignedDate` | Date the item was assigned |
+    | `maintenanceCost` | Cumulative maintenance cost (auto-updated) |
+    | `lastMaintenanceDate` | Date of the most recent maintenance (auto-updated) |
+    | `warrantyExpiry` | Warranty expiry date |
+    | `description` | Optional notes |
+  </Accordion>
+  <Accordion title="Inventory expense">
+    | Field | Description |
+    |-------|-------------|
+    | `inventoryItemId` | Linked inventory item |
+    | `expenseType` | `Maintenance`, `Repair`, `Upgrade`, `Replacement`, or `Other` |
+    | `amount` | Expense amount |
+    | `date` | Date of the expense |
+    | `description` | Description of the work done |
+    | `vendor` | Vendor or contractor name |
+  </Accordion>
+</AccordionGroup>
+
+## Stock status thresholds
+
+The Dashboard uses the following thresholds to classify inventory items by stock status:
+
+| Status | Condition |
+|--------|-----------|
+| In Stock | `quantity > 10` |
+| Low Stock | `quantity > 0` and `quantity ≤ 10` |
+| Out of Stock | `quantity = 0` |
+
+## Permissions
+
+This module requires the `inventory` permission in `admin.permissions.modules`.

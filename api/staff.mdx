@@ -1,0 +1,224 @@
+---
+title: "Staff API"
+description: "Manage teaching and non-teaching staff records in Concordia PSH."
+---
+
+<Info>
+  All endpoints require JWT authentication via the `Authorization: Bearer <token>` header or the `access_token` cookie.
+</Info>
+
+The Staff API provides unified management for both teaching and non-teaching staff. Use the `isTeaching` and `isNonTeaching` boolean flags to distinguish staff types.
+
+## Endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/hr/staff` | List all staff |
+| `GET` | `/api/hr/staff/:id` | Get staff member by ID |
+| `POST` | `/api/hr/staff` | Create a staff member |
+| `PATCH` | `/api/hr/staff/:id` | Update a staff member |
+| `DELETE` | `/api/hr/staff/:id` | Delete a staff member |
+
+---
+
+### GET /api/hr/staff
+
+Return a filtered list of staff members.
+
+<ParamField query="isTeaching" type="boolean">
+  Filter to teaching staff only (`true`) or exclude teaching staff (`false`).
+</ParamField>
+
+<ParamField query="isNonTeaching" type="boolean">
+  Filter to non-teaching staff only (`true`) or exclude them (`false`).
+</ParamField>
+
+<ParamField query="search" type="string">
+  Search by name or other fields.
+</ParamField>
+
+<ParamField query="status" type="string">
+  Filter by status: `ACTIVE`, `TERMINATED`, or `RETIRED`.
+</ParamField>
+
+```bash
+curl "http://localhost:3003/api/hr/staff?isTeaching=true&status=ACTIVE" \
+  -H "Authorization: Bearer <access_token>"
+```
+
+---
+
+### GET /api/hr/staff/:id
+
+Return a single staff member by numeric ID.
+
+<ParamField path="id" type="number" required>
+  Staff member's unique ID.
+</ParamField>
+
+---
+
+### POST /api/hr/staff
+
+Create a new staff member. Accepts `multipart/form-data` to support photo uploads.
+
+<Note>
+  Send the request as `multipart/form-data`. The `photo` field accepts an image file (max 5 MB).
+</Note>
+
+<ParamField body="name" type="string" required>
+  Staff member's full name.
+</ParamField>
+
+<ParamField body="fatherName" type="string">
+  Father's name.
+</ParamField>
+
+<ParamField body="email" type="string">
+  Email address. Used for login if the staff member has portal access.
+</ParamField>
+
+<ParamField body="password" type="string">
+  Portal login password.
+</ParamField>
+
+<ParamField body="phone" type="string">
+  Contact phone number.
+</ParamField>
+
+<ParamField body="cnic" type="string">
+  National identity card number.
+</ParamField>
+
+<ParamField body="address" type="string">
+  Residential address.
+</ParamField>
+
+<ParamField body="staffType" type="string">
+  Employment type: `PERMANENT` or `CONTRACT`.
+</ParamField>
+
+<ParamField body="status" type="string">
+  Staff status: `ACTIVE`, `TERMINATED`, or `RETIRED`.
+</ParamField>
+
+<ParamField body="basicPay" type="string">
+  Basic monthly salary.
+</ParamField>
+
+<ParamField body="joinDate" type="string">
+  Date of joining (ISO date string).
+</ParamField>
+
+<ParamField body="leaveDate" type="string">
+  Date of leaving, if applicable.
+</ParamField>
+
+<ParamField body="contractStart" type="string">
+  Contract start date (for contract staff).
+</ParamField>
+
+<ParamField body="contractEnd" type="string">
+  Contract end date (for contract staff).
+</ParamField>
+
+<ParamField body="isTeaching" type="boolean">
+  Set to `true` if the staff member is a teacher.
+</ParamField>
+
+<ParamField body="isNonTeaching" type="boolean">
+  Set to `true` if the staff member is non-teaching.
+</ParamField>
+
+<ParamField body="specialization" type="string">
+  Teaching specialization (teaching staff only).
+</ParamField>
+
+<ParamField body="highestDegree" type="string">
+  Highest academic degree (teaching staff only).
+</ParamField>
+
+<ParamField body="departmentId" type="string">
+  Academic department ID (teaching staff only).
+</ParamField>
+
+<ParamField body="designation" type="string">
+  Job designation (non-teaching staff only).
+</ParamField>
+
+<ParamField body="empDepartment" type="string">
+  Operational department (non-teaching staff only). One of: `ADMIN`, `FINANCE`, `SECURITY`, `TRANSPORT`, `CLASS_4`, `MAINTENANCE`, `IT_SUPPORT`, `LIBRARY`, `LAB`, `OTHER`.
+</ParamField>
+
+<ParamField body="permissions" type="object">
+  Permission map for portal access.
+</ParamField>
+
+<ParamField body="photo" type="file">
+  Profile photo (max 5 MB).
+</ParamField>
+
+```bash
+curl -X POST http://localhost:3003/api/hr/staff \
+  -H "Authorization: Bearer <access_token>" \
+  -F "name=Dr. Fatima Khan" \
+  -F "email=fatima@school.com" \
+  -F "staffType=PERMANENT" \
+  -F "isTeaching=true" \
+  -F "specialization=Mathematics" \
+  -F "basicPay=50000"
+```
+
+---
+
+### PATCH /api/hr/staff/:id
+
+Update an existing staff member. Accepts `multipart/form-data`. All fields are optional.
+
+<ParamField path="id" type="number" required>
+  Staff member's ID.
+</ParamField>
+
+All body fields from the create endpoint are accepted as optional updates. If a new `photo` file is uploaded, the old photo is deleted from Cloudinary automatically.
+
+```bash
+curl -X PATCH http://localhost:3003/api/hr/staff/5 \
+  -H "Authorization: Bearer <access_token>" \
+  -F "basicPay=55000"
+```
+
+---
+
+### DELETE /api/hr/staff/:id
+
+Delete a staff member. The associated Cloudinary photo is also deleted.
+
+<ParamField path="id" type="number" required>
+  Staff member's ID.
+</ParamField>
+
+```bash
+curl -X DELETE http://localhost:3003/api/hr/staff/5 \
+  -H "Authorization: Bearer <access_token>"
+```
+
+---
+
+## Legacy teacher endpoints
+
+These endpoints under `/api/teacher` remain available for backward compatibility.
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/teacher/get` | List all teachers |
+| `GET` | `/api/teacher/get/names` | List teacher names only |
+| `POST` | `/api/teacher/create` | Create a teacher |
+| `PATCH` | `/api/teacher/update` | Update a teacher (`?teacherID=<id>`) |
+| `DELETE` | `/api/teacher/remove` | Remove a teacher (`?teacherID=<id>`) |
+| `GET` | `/api/teacher/subjects` | Get subjects for the authenticated teacher |
+| `GET` | `/api/teacher/subjects/by-class` | Get subjects by class for the authenticated teacher |
+| `GET` | `/api/teacher/get/classes` | Get classes assigned to the authenticated teacher |
+
+<Warning>
+  Prefer the unified `/api/hr/staff` endpoints for new integrations. The `/api/teacher` routes may be deprecated in a future release.
+</Warning>

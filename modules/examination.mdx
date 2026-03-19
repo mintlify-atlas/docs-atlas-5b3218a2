@@ -1,0 +1,159 @@
+---
+title: "Examination"
+description: "Create exams, schedule subject papers, enter marks, and auto-generate results and class rankings."
+---
+
+## Overview
+
+The Examination module manages the full examination lifecycle. Admins and teachers create exams for programs and classes, define a schedule for each subject paper, enter student marks (individually or in bulk), and trigger automatic result and position calculation. Report cards can be printed using templates configured in the Configuration module.
+
+## Key features
+
+<CardGroup cols={2}>
+  <Card title="Exam creation" icon="file-pen">
+    Create exams with a name, program, class, session (academic year/term), type (e.g., Mid-Term, Final), and start/end dates.
+  </Card>
+  <Card title="Exam scheduling" icon="calendar-days">
+    Add a schedule for each subject in the exam specifying the paper date, start and end time, total marks, and optional room assignment.
+  </Card>
+  <Card title="Marks entry" icon="pencil">
+    Enter marks per student per subject. Each mark entry records total marks, obtained marks, absent flag, and teacher remarks. Bulk entry is supported for an entire class.
+  </Card>
+  <Card title="Auto result calculation" icon="calculator">
+    After marks are entered, results are calculated automatically: percentage, GPA, grade, and remarks. Grading uses different scales for INTERMEDIATE vs. UNDERGRADUATE programs.
+  </Card>
+  <Card title="Position rankings" icon="trophy">
+    After results are generated, positions are calculated per class ordered by percentage (descending). Ties result in the same rank.
+  </Card>
+  <Card title="Report card printing" icon="print">
+    Individual student results (marks, result, position) can be retrieved and printed using the configured report card HTML template.
+  </Card>
+</CardGroup>
+
+## Workflows
+
+<Tabs>
+  <Tab title="Create an exam">
+    <Steps>
+      <Step title="Fill in exam details">
+        Enter the exam name, select the program and class, enter the session string (e.g., `2025-2026`), set the type (e.g., `Mid-Term`), and set start and end dates.
+      </Step>
+      <Step title="Add schedule">
+        For each subject in the exam, add a schedule entry: subject, date, start time, end time, total marks, and room (optional).
+      </Step>
+      <Step title="Submit">
+        The exam and all schedule entries are created in a single operation.
+      </Step>
+    </Steps>
+  </Tab>
+  <Tab title="Enter marks">
+    <Steps>
+      <Step title="Select exam">
+        Choose the exam from the list.
+      </Step>
+      <Step title="Enter marks per student per subject">
+        For each student, enter the subject name, total marks, obtained marks, absence flag, and optional teacher remarks.
+      </Step>
+      <Step title="Use bulk entry">
+        Submit all marks for a class in a single bulk request. Existing marks for the same student/exam/subject combination are updated rather than duplicated.
+      </Step>
+      <Step title="Auto-calculate">
+        Results and positions are recalculated automatically after each marks save or bulk save operation.
+      </Step>
+    </Steps>
+  </Tab>
+  <Tab title="View results and positions">
+    <Steps>
+      <Step title="Generate results">
+        Trigger result generation for the exam. Results are computed per student from the sum of all their subject marks.
+      </Step>
+      <Step title="Generate positions">
+        Trigger position generation. Students in the same class are ranked by percentage in descending order.
+      </Step>
+      <Step title="Retrieve student result">
+        Fetch a single student's result for a specific exam including all subject marks, result record, and class position.
+      </Step>
+    </Steps>
+  </Tab>
+</Tabs>
+
+## Data fields
+
+<AccordionGroup>
+  <Accordion title="Exam">
+    | Field | Description |
+    |-------|-------------|
+    | `examName` | Name of the exam |
+    | `programId` | Linked program |
+    | `classId` | Linked class (optional) |
+    | `session` | Academic session string (e.g., `2025-2026`) |
+    | `type` | Exam type (e.g., `Mid-Term`, `Final`, `Annual`) |
+    | `startDate` | Exam period start date |
+    | `endDate` | Exam period end date |
+  </Accordion>
+  <Accordion title="Exam schedule">
+    | Field | Description |
+    |-------|-------------|
+    | `subjectId` | Subject being examined |
+    | `date` | Date of the subject paper |
+    | `startTime` | Paper start time (HH:MM) |
+    | `endTime` | Paper end time (HH:MM) |
+    | `totalMarks` | Maximum marks for this paper |
+    | `room` | Optional room assignment |
+  </Accordion>
+  <Accordion title="Marks">
+    | Field | Description |
+    |-------|-------------|
+    | `examId` | Linked exam |
+    | `studentId` | Linked student |
+    | `subject` | Subject name string |
+    | `totalMarks` | Maximum marks for this subject |
+    | `obtainedMarks` | Marks obtained by the student |
+    | `isAbsent` | `true` if the student was absent for this paper |
+    | `teacherRemarks` | Optional teacher comments |
+  </Accordion>
+  <Accordion title="Result">
+    | Field | Description |
+    |-------|-------------|
+    | `totalMarks` | Aggregate total marks across all subjects |
+    | `obtainedMarks` | Aggregate obtained marks |
+    | `percentage` | Calculated percentage |
+    | `gpa` | GPA on a 4.0 scale |
+    | `grade` | Letter grade (A+, A, B+, B, C, D, E, F) |
+    | `remarks` | `Excellent`, `Good`, `Average`, or `Poor` |
+  </Accordion>
+</AccordionGroup>
+
+## Grading scales
+
+<Tabs>
+  <Tab title="Intermediate programs">
+    | Percentage | Grade | GPA |
+    |------------|-------|-----|
+    | ≥ 90 | A+ | 4.0 |
+    | ≥ 80 | A | 3.7 |
+    | ≥ 70 | B+ | 3.3 |
+    | ≥ 60 | B | 3.0 |
+    | ≥ 50 | C | 2.3 |
+    | ≥ 40 | D | 2.0 |
+    | ≥ 33 | E | 1.0 |
+    | < 33 | F | 0.0 |
+  </Tab>
+  <Tab title="Undergraduate (BS) programs">
+    | Percentage | Grade | GPA |
+    |------------|-------|-----|
+    | ≥ 90 | A+ | 4.0 |
+    | ≥ 85 | A | 3.7 |
+    | ≥ 80 | B+ | 3.3 |
+    | ≥ 75 | B | 3.0 |
+    | ≥ 70 | C+ | 2.7 |
+    | ≥ 65 | C | 2.3 |
+    | ≥ 60 | D+ | 2.0 |
+    | ≥ 55 | D | 1.7 |
+    | < 55 | F | 0.0 |
+  </Tab>
+</Tabs>
+
+## Permissions
+
+This module requires the `examination` permission in `admin.permissions.modules`.

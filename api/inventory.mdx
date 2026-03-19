@@ -1,0 +1,234 @@
+---
+title: "Inventory API"
+description: "Manage school inventory items and track maintenance expenses."
+---
+
+<Info>
+  All endpoints require JWT authentication via the `Authorization: Bearer <token>` header or the `access_token` cookie.
+</Info>
+
+## Endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/inventory/items` | List inventory items |
+| `GET` | `/api/inventory/items/:id` | Get item by ID |
+| `POST` | `/api/inventory/items` | Add inventory item |
+| `PATCH` | `/api/inventory/items/:id` | Update inventory item |
+| `DELETE` | `/api/inventory/items/:id` | Delete inventory item |
+| `GET` | `/api/inventory/expenses` | List all inventory expenses |
+| `GET` | `/api/inventory/expenses/item/:itemId` | List expenses for a specific item |
+| `POST` | `/api/inventory/expenses` | Log an inventory expense |
+| `PATCH` | `/api/inventory/expenses/:id` | Update an expense |
+| `DELETE` | `/api/inventory/expenses/:id` | Delete an expense |
+
+---
+
+## Inventory items
+
+### GET /api/inventory/items
+
+Return all inventory items with optional filters.
+
+<ParamField query="category" type="string">
+  Filter by category.
+</ParamField>
+
+<ParamField query="assignedTo" type="string">
+  Filter by assigned user or department.
+</ParamField>
+
+<ParamField query="condition" type="string">
+  Filter by item condition (e.g. `NEW`, `GOOD`, `FAIR`, `POOR`).
+</ParamField>
+
+```bash
+curl "http://localhost:3003/api/inventory/items?category=Furniture&condition=GOOD" \
+  -H "Authorization: Bearer <access_token>"
+```
+
+### GET /api/inventory/items/:id
+
+Return a single inventory item.
+
+<ParamField path="id" type="string" required>
+  Item ID.
+</ParamField>
+
+### POST /api/inventory/items
+
+Add a new item to the school inventory.
+
+<ParamField body="itemName" type="string" required>
+  Item name.
+</ParamField>
+
+<ParamField body="category" type="string" required>
+  Category (e.g. `Furniture`, `Electronics`, `Sports`).
+</ParamField>
+
+<ParamField body="quantity" type="number" required>
+  Quantity in stock.
+</ParamField>
+
+<ParamField body="unitPrice" type="number" required>
+  Price per unit.
+</ParamField>
+
+<ParamField body="totalValue" type="number" required>
+  Total value (`quantity × unitPrice`).
+</ParamField>
+
+<ParamField body="purchaseDate" type="string" required>
+  Purchase date (ISO date string).
+</ParamField>
+
+<ParamField body="supplier" type="string" required>
+  Supplier name.
+</ParamField>
+
+<ParamField body="condition" type="string" required>
+  Current condition.
+</ParamField>
+
+<ParamField body="location" type="string" required>
+  Physical location.
+</ParamField>
+
+<ParamField body="assignedTo" type="string">
+  User or department the item is assigned to (ID).
+</ParamField>
+
+<ParamField body="assignedToName" type="string">
+  Human-readable name of the assignee.
+</ParamField>
+
+<ParamField body="assignedDate" type="string">
+  Date of assignment (ISO date string).
+</ParamField>
+
+<ParamField body="maintenanceCost" type="number">
+  Accumulated maintenance cost.
+</ParamField>
+
+<ParamField body="lastMaintenanceDate" type="string">
+  Date of last maintenance (ISO date string).
+</ParamField>
+
+<ParamField body="warrantyExpiry" type="string">
+  Warranty expiry date (ISO date string).
+</ParamField>
+
+<ParamField body="description" type="string">
+  Optional description.
+</ParamField>
+
+```bash
+curl -X POST http://localhost:3003/api/inventory/items \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "itemName": "Projector",
+    "category": "Electronics",
+    "quantity": 5,
+    "unitPrice": 45000,
+    "totalValue": 225000,
+    "purchaseDate": "2025-01-10",
+    "supplier": "TechZone",
+    "condition": "NEW",
+    "location": "Storeroom B"
+  }'
+```
+
+### PATCH /api/inventory/items/:id
+
+Update an existing inventory item. All fields are optional.
+
+<ParamField path="id" type="string" required>
+  Item ID.
+</ParamField>
+
+```bash
+curl -X PATCH http://localhost:3003/api/inventory/items/abc-123 \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"condition": "FAIR", "maintenanceCost": 5000}'
+```
+
+### DELETE /api/inventory/items/:id
+
+<ParamField path="id" type="string" required>
+  Item ID.
+</ParamField>
+
+---
+
+## Inventory expenses
+
+Track per-item maintenance and repair costs.
+
+### GET /api/inventory/expenses
+
+Return all inventory expenses across all items.
+
+### GET /api/inventory/expenses/item/:itemId
+
+Return expenses for a specific inventory item.
+
+<ParamField path="itemId" type="string" required>
+  Inventory item ID.
+</ParamField>
+
+### POST /api/inventory/expenses
+
+Log a maintenance or repair expense for an inventory item.
+
+<ParamField body="inventoryItemId" type="string" required>
+  ID of the inventory item.
+</ParamField>
+
+<ParamField body="expenseType" type="string" required>
+  Type of expense (e.g. `MAINTENANCE`, `REPAIR`, `REPLACEMENT`).
+</ParamField>
+
+<ParamField body="amount" type="number" required>
+  Expense amount.
+</ParamField>
+
+<ParamField body="date" type="string" required>
+  Expense date (ISO date string).
+</ParamField>
+
+<ParamField body="description" type="string" required>
+  Description of the work done.
+</ParamField>
+
+<ParamField body="vendor" type="string">
+  Vendor or service provider name.
+</ParamField>
+
+```bash
+curl -X POST http://localhost:3003/api/inventory/expenses \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "inventoryItemId": "abc-123",
+    "expenseType": "MAINTENANCE",
+    "amount": 3000,
+    "date": "2025-03-10",
+    "description": "Lamp replacement",
+    "vendor": "TechZone"
+  }'
+```
+
+### PATCH /api/inventory/expenses/:id
+
+<ParamField path="id" type="string" required>
+  Expense record ID.
+</ParamField>
+
+### DELETE /api/inventory/expenses/:id
+
+<ParamField path="id" type="string" required>
+  Expense record ID.
+</ParamField>
