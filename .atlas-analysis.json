@@ -1,0 +1,140 @@
+{
+  "projectType": "saas",
+  "projectName": "Concordia PSH",
+  "projectDescription": "A full-featured educational institution management system covering student records, fee management, attendance, HR & payroll, examinations, hostel, finance, and inventory for schools and colleges.",
+  "theme": "linden",
+  "primaryColor": "#1E3A5F",
+  "lightColor": "#E8F0F7",
+  "darkColor": "#0F1E30",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Overview",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "deployment"
+            ]
+          },
+          {
+            "group": "Architecture",
+            "pages": [
+              "architecture/overview",
+              "architecture/backend",
+              "architecture/frontend",
+              "architecture/database"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Modules",
+        "groups": [
+          {
+            "group": "Administration",
+            "pages": [
+              "modules/dashboard",
+              "modules/configuration",
+              "modules/front-office"
+            ]
+          },
+          {
+            "group": "Academics",
+            "pages": [
+              "modules/academics",
+              "modules/students",
+              "modules/staff",
+              "modules/attendance",
+              "modules/examination"
+            ]
+          },
+          {
+            "group": "Finance & HR",
+            "pages": [
+              "modules/fee-management",
+              "modules/finance",
+              "modules/hr-payroll"
+            ]
+          },
+          {
+            "group": "Facilities",
+            "pages": [
+              "modules/hostel",
+              "modules/inventory"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Authentication",
+            "pages": [
+              "api/authentication"
+            ]
+          },
+          {
+            "group": "Endpoints",
+            "pages": [
+              "api/students",
+              "api/staff",
+              "api/academics",
+              "api/attendance",
+              "api/fee-management",
+              "api/examination",
+              "api/hr-payroll",
+              "api/hostel",
+              "api/finance",
+              "api/inventory",
+              "api/front-office",
+              "api/configuration"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Role-based access control with granular module-level permissions",
+    "Student lifecycle management from inquiry to graduation",
+    "Comprehensive fee management with challans, installments, and arrears tracking",
+    "Attendance tracking for both students and staff",
+    "Examination management with marks, results, and report cards",
+    "HR & payroll with deductions, allowances, and advance salary management",
+    "Hostel management with room allocation and inventory",
+    "Finance module with income, expense, and closing balance tracking",
+    "School inventory tracking with maintenance and expense logs",
+    "Front office with inquiries, visitor management, and complaint handling",
+    "Cloudinary integration for photo and document uploads",
+    "Docker Compose deployment with MySQL database"
+  ],
+  "publicApiSurface": [
+    "POST /api/auth/login",
+    "POST /api/auth/refresh",
+    "GET /api/students",
+    "POST /api/students",
+    "GET /api/staff",
+    "POST /api/staff",
+    "GET /api/academics/departments",
+    "GET /api/academics/programs",
+    "GET /api/academics/classes",
+    "GET /api/attendance",
+    "POST /api/attendance",
+    "GET /api/fee-management/challans",
+    "POST /api/fee-management/challans",
+    "GET /api/examination/exams",
+    "POST /api/examination/exams",
+    "GET /api/hr/payroll",
+    "POST /api/hr/payroll",
+    "GET /api/hostel/registrations",
+    "GET /api/finance/income",
+    "GET /api/finance/expenses",
+    "GET /api/inventory",
+    "GET /api/front-office/inquiries",
+    "GET /api/dashboard"
+  ]
+}
