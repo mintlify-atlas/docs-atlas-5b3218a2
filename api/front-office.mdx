@@ -69,7 +69,7 @@ curl "http://localhost:3003/api/front-office/get/inquiries?page=1&limit=20" \
 </ParamField>
 
 <ParamField body="programInterest" type="string" required>
-  Program the student is interested in.
+  Program ID the student is interested in (numeric ID as string, e.g. `"2"`).
 </ParamField>
 
 <ParamField body="fatherCnic" type="string">
@@ -212,7 +212,7 @@ curl -X POST http://localhost:3003/api/front-office/create/visitor \
 ### POST /api/front-office/create/complaint
 
 <ParamField body="type" type="string" required>
-  Complaint type (e.g. `Academic`, `Facility`, `Behavioral`).
+  Complainant type: `Parent`, `Student`, or `Staff`.
 </ParamField>
 
 <ParamField body="complainantName" type="string" required>
@@ -231,8 +231,8 @@ curl -X POST http://localhost:3003/api/front-office/create/visitor \
   Full complaint details.
 </ParamField>
 
-<ParamField body="status" type="string" required>
-  Current status (e.g. `OPEN`, `IN_PROGRESS`, `RESOLVED`).
+<ParamField body="status" type="string">
+  Current status: `Pending`, `In_Progress`, `Resolved`, or `Rejected`. Defaults to `Pending`.
 </ParamField>
 
 <ParamField body="assignedToId" type="number">
@@ -244,12 +244,11 @@ curl -X POST http://localhost:3003/api/front-office/create/complaint \
   -H "Authorization: Bearer <access_token>" \
   -H "Content-Type: application/json" \
   -d '{
-    "type": "Facility",
+    "type": "Parent",
     "complainantName": "Mr. Hassan",
     "contact": 3001234567,
     "subject": "Broken chairs",
-    "details": "Chairs in room 101 need replacement",
-    "status": "OPEN"
+    "details": "Chairs in room 101 need replacement"
   }'
 ```
 

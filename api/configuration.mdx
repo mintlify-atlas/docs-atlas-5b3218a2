@@ -1,6 +1,6 @@
 ---
 title: "Configuration API"
-description: "Manage institute settings and templates for report cards, payroll slips, and ID cards."
+description: "Manage institute settings, admin accounts, and templates for report cards, payroll slips, and ID cards."
 ---
 
 <Info>
@@ -11,6 +11,10 @@ description: "Manage institute settings and templates for report cards, payroll 
 
 | Method | Path | Description |
 |--------|------|-------------|
+| `GET` | `/api/admin/get/admins` | List all admin accounts (SUPER_ADMIN only) |
+| `POST` | `/api/admin/create/admin` | Create a new admin account (SUPER_ADMIN only) |
+| `PATCH` | `/api/admin/update/admin` | Update an admin account (SUPER_ADMIN only) |
+| `DELETE` | `/api/admin/remove/admin` | Delete an admin account (SUPER_ADMIN only) |
 | `GET` | `/api/configuration/institute-settings` | Get institute settings |
 | `PATCH` | `/api/configuration/institute-settings` | Update institute settings |
 | `POST` | `/api/configuration/report-card-templates` | Create a report card template |
@@ -69,8 +73,16 @@ curl http://localhost:3003/api/configuration/institute-settings \
   Contact email.
 </ResponseField>
 
-<ResponseField name="logoUrl" type="string">
-  URL of the institution logo.
+<ResponseField name="logo" type="string">
+  URL of the institution logo (Cloudinary URL).
+</ResponseField>
+
+<ResponseField name="challanPrefix" type="string">
+  Prefix prepended to all generated challan numbers.
+</ResponseField>
+
+<ResponseField name="lateFeeFine" type="number">
+  Default late fee fine amount (PKR).
 </ResponseField>
 
 ### PATCH /api/configuration/institute-settings
@@ -83,6 +95,70 @@ curl -X PATCH http://localhost:3003/api/configuration/institute-settings \
   -H "Content-Type: application/json" \
   -d '{"instituteName": "Concordia PSH", "phone": "+92-51-1234567"}'
 ```
+
+---
+
+## Admin management
+
+Admin accounts are managed under the `/api/admin/` prefix. All admin management endpoints require `SUPER_ADMIN` role.
+
+### GET /api/admin/get/admins
+
+Return all admin accounts.
+
+```bash
+curl http://localhost:3003/api/admin/get/admins \
+  -H "Authorization: Bearer <access_token>"
+```
+
+### POST /api/admin/create/admin
+
+Create a new admin account with specific module permissions.
+
+<ParamField body="name" type="string" required>
+  Admin's full name.
+</ParamField>
+
+<ParamField body="email" type="string" required>
+  Admin's email address (must be unique).
+</ParamField>
+
+<ParamField body="password" type="string" required>
+  Admin's password (will be hashed).
+</ParamField>
+
+<ParamField body="role" type="string" required>
+  Must be `SUPER_ADMIN` or `ADMIN`.
+</ParamField>
+
+<ParamField body="permissions" type="object">
+  Permission map. For module-based access: `{"modules": ["Students", "Fee Management"]}`. For full access: `{"all": true}`.
+</ParamField>
+
+```bash
+curl -X POST http://localhost:3003/api/admin/create/admin \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Finance Admin", "email": "finance@school.com", "password": "secure123", "role": "ADMIN", "permissions": {"modules": ["Fee Management", "Finance"]}}'
+```
+
+### PATCH /api/admin/update/admin
+
+Update an existing admin's details or permissions.
+
+<ParamField query="adminID" type="number" required>
+  Admin account ID.
+</ParamField>
+
+All body fields from the create endpoint are accepted as optional updates.
+
+### DELETE /api/admin/remove/admin
+
+Delete an admin account.
+
+<ParamField query="adminID" type="number" required>
+  Admin account ID.
+</ParamField>
 
 ---
 

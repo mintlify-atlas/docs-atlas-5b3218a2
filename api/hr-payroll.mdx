@@ -193,15 +193,31 @@ Get a monthly attendance summary for a staff member.
 
 Create a holiday entry.
 
-<Note>
-  The request body typically includes `date`, `name`, and `type` fields.
-</Note>
+<ParamField body="date" type="string" required>
+  Holiday date (ISO date string).
+</ParamField>
+
+<ParamField body="title" type="string" required>
+  Holiday title (e.g. `Pakistan Day`).
+</ParamField>
+
+<ParamField body="type" type="string" required>
+  Holiday type (e.g. `National`, `Religious`, `Gazetted`).
+</ParamField>
+
+<ParamField body="repeatYearly" type="boolean">
+  If `true`, this holiday recurs on the same date every year. Defaults to `false`.
+</ParamField>
+
+<ParamField body="description" type="string">
+  Optional description.
+</ParamField>
 
 ```bash
 curl -X POST http://localhost:3003/api/hr/holidays \
   -H "Authorization: Bearer <access_token>" \
   -H "Content-Type: application/json" \
-  -d '{"date": "2025-03-23", "name": "Pakistan Day", "type": "PUBLIC"}'
+  -d '{"date": "2025-03-23", "title": "Pakistan Day", "type": "National"}'
 ```
 
 ### GET /api/hr/holidays

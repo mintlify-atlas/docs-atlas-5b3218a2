@@ -1,6 +1,6 @@
 ---
 title: "Academics API"
-description: "Manage programs, classes, sections, subjects, teacher-subject mappings, and timetables."
+description: "Manage departments, programs, classes, sections, subjects, teacher-subject mappings, and timetables."
 ---
 
 <Info>
@@ -9,13 +9,66 @@ description: "Manage programs, classes, sections, subjects, teacher-subject mapp
 
 ## Resources
 
-- **Programs** — top-level academic programs (e.g. BS Computer Science)
+- **Departments** — top-level organizational units (separate `/api/department/` prefix)
+- **Programs** — academic programs within a department (e.g. BS Computer Science)
 - **Classes** — years or semesters within a program
 - **Sections** — class subdivisions (A, B, C …)
 - **Subjects** — individual courses within a class
 - **TSM (Teacher-Subject Mapping)** — assigns a teacher to a subject
-- **TCM (Teacher-Class Mapping)** — assigns a teacher to a class
+- **TCM (Teacher-Class-Section Mapping)** — assigns a teacher to a class/section
 - **Timetable** — per-class schedule entries
+
+---
+
+## Departments
+
+Departments are managed under the `/api/department/` prefix.
+
+### GET /api/department/get
+
+Return all departments with full details.
+
+```bash
+curl http://localhost:3003/api/department/get \
+  -H "Authorization: Bearer <access_token>"
+```
+
+### GET /api/department/get/names
+
+Return a lightweight list of department IDs and names.
+
+### POST /api/department/create
+
+<ParamField body="name" type="string" required>
+  Department name (must be unique).
+</ParamField>
+
+<ParamField body="description" type="string">
+  Optional description.
+</ParamField>
+
+<ParamField body="hodId" type="number">
+  Staff ID of the head of department.
+</ParamField>
+
+```bash
+curl -X POST http://localhost:3003/api/department/create \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Computer Science", "description": "CS Department"}'
+```
+
+### PATCH /api/department/update
+
+<ParamField query="depID" type="number" required>
+  Department ID.
+</ParamField>
+
+### DELETE /api/department/remove
+
+<ParamField query="depID" type="number" required>
+  Department ID.
+</ParamField>
 
 ---
 
@@ -41,7 +94,7 @@ Return a lightweight list of program IDs and names.
 </ParamField>
 
 <ParamField body="level" type="string" required>
-  Academic level (e.g. `UNDERGRADUATE`, `GRADUATE`).
+  Academic level. Must be one of: `INTERMEDIATE`, `UNDERGRADUATE`, `COACHING`, `DIPLOMA`, `SHORT_COURSE`.
 </ParamField>
 
 <ParamField body="departmentId" type="string | number" required>
